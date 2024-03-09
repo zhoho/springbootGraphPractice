@@ -38,6 +38,4 @@ public class PeopleService {
                 .count();
         return femaleCount;
     }
-
-
 }
