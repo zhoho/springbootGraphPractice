@@ -5,44 +5,47 @@
     <title>Title</title>
 </head>
 <body>
-<h1>hello world!</h1>
+<h1> 연령별 및 성별 그래프 </h1>
 
 <div>
-    <canvas id="ageChart"></canvas>
-    <canvas id="genderChart"></canvas>
+    <canvas id="mixedChart"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    const ageDistribution = [[${ageDistribution}]];
-    const femaleCount = [[${femaleCount}]];
-    const totalPeople = Object.values(ageDistribution).reduce((a, b) => a + b, 0);
-    const otherCount = totalPeople - femaleCount;
+    const ageDistribution = [[${ageDistribution}]]; // 연령 분포 데이터
+    const femalesByAgeGroup = [[${femalesByAgeGroup}]]; // 연령대별 여성 수 데이터
+    const totalPeople = Object.values(ageDistribution).reduce((a, b) => a + b, 0); // 총 인원 계산
+    const femaleCount = Object.values(femalesByAgeGroup).reduce((a, b) => a + b, 0); // 전체 여성 수 계산
+    const otherCount = totalPeople - femaleCount; // '기타' 성별 인원 계산
 
-    const ageCtx = document.getElementById('ageChart');
-    const genderCtx = document.getElementById('genderChart');
+    const mixedCtx = document.getElementById('mixedChart'); // 혼합 차트를 위한 캔버스 요소 선택
 
-    new Chart(ageCtx, {
-        type: 'bar',
+    new Chart(mixedCtx, {
         data: {
-            labels: Object.keys(ageDistribution),
             datasets: [{
-                label: 'Age Distribution',
-                data: Object.values(ageDistribution)
-            }]
-        }
-    });
-
-    new Chart(genderCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Female', 'Others'],
-            datasets: [{
-                label: 'Gender Distribution',
-                data: [femaleCount, otherCount]
-            }]
+                type: 'bar',
+                label: '연령 분포',
+                data: Object.values(ageDistribution),
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+            }, {
+                type: 'line',
+                label: '성별 분포 (여성)',
+                data: Object.values(femalesByAgeGroup),
+                borderColor: 'rgb(255, 99, 132)',
+                fill: false
+            }],
+            labels: Object.keys(femalesByAgeGroup) // X축 레이블을 연령대별로 설정
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
     /*]]>*/

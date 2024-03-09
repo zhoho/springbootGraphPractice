@@ -24,9 +24,12 @@ public class PeopleController {
     public String getChartData(Model model) {
         Map<Integer, Long> ageDistribution = peopleService.getAgeDistribution();
         Long femaleCount = peopleService.getFemaleCount();
+        Map<Integer, Long> femalesByAgeGroup = peopleService.countFemalesByAgeGroup(); // 연령대별 여성 수 추가
+
 
         model.addAttribute("ageDistribution", ageDistribution);
         model.addAttribute("femaleCount", femaleCount);
+        model.addAttribute("femalesByAgeGroup", femalesByAgeGroup); // 모델에 연령대별 여성 수 추가
 
         return "index";  // Thymeleaf 템플릿 반환
     }

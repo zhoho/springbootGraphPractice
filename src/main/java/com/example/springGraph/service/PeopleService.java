@@ -38,4 +38,16 @@ public class PeopleService {
                 .count();
         return femaleCount;
     }
+
+    public Map<Integer, Long> countFemalesByAgeGroup() {
+        List<People> peopleList = peopleRepository.findAll();
+        Map<Integer, Long> femalesCountByAgeGroup = peopleList.stream()
+                .filter(person -> "Female".equals(person.getGender()))
+                .collect(Collectors.groupingBy(
+                        person -> (person.getAge() / 10) * 10, // 연령대를 계산 (예: 25 -> 20, 37 -> 30)
+                        Collectors.counting() // 그룹별로 수를 센다
+                ));
+        return femalesCountByAgeGroup;
+    }
+
 }
