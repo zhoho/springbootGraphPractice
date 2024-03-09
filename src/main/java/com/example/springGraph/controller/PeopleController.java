@@ -1,15 +1,15 @@
 package com.example.springGraph.controller;
 
-import com.example.springGraph.entity.People;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import com.example.springGraph.service.PeopleService;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/index")
 public class PeopleController {
 
@@ -21,8 +21,13 @@ public class PeopleController {
     }
 
     @GetMapping
-    public List<People> getAllPeople() {
-        return peopleService.getAllPeople();
+    public String getChartData(Model model) {
+        Map<Integer, Long> ageDistribution = peopleService.getAgeDistribution();
+        Long femaleCount = peopleService.getFemaleCount();
+
+        model.addAttribute("ageDistribution", ageDistribution);
+        model.addAttribute("femaleCount", femaleCount);
+
+        return "index";  // Thymeleaf 템플릿 반환
     }
 }
-

@@ -1,44 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
 <body>
 <h1>hello world!</h1>
-</body>
 
 <div>
-    <canvas id="myChart"></canvas>
+    <canvas id="ageChart"></canvas>
+    <canvas id="genderChart"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-    const ctx = document.getElementById('myChart');
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const ageDistribution = [[${ageDistribution}]];
+    const femaleCount = [[${femaleCount}]];
+    const totalPeople = Object.values(ageDistribution).reduce((a, b) => a + b, 0);
+    const otherCount = totalPeople - femaleCount;
 
-    new Chart(ctx, {
+    const ageCtx = document.getElementById('ageChart');
+    const genderCtx = document.getElementById('genderChart');
+
+    new Chart(ageCtx, {
+        type: 'bar',
         data: {
+            labels: Object.keys(ageDistribution),
             datasets: [{
-                type: 'bar',
-                label: 'Bar Dataset',
-                data: [10, 20, 30, 40]
-            }, {
-                type: 'line',
-                label: 'Line Dataset',
-                data: [10, 50, 4, 0],
-            }],
-            labels: ['January', 'February', 'March', 'April']
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+                label: 'Age Distribution',
+                data: Object.values(ageDistribution)
+            }]
         }
     });
 
+    new Chart(genderCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Female', 'Others'],
+            datasets: [{
+                label: 'Gender Distribution',
+                data: [femaleCount, otherCount]
+            }]
+        }
+    });
+    /*]]>*/
 </script>
 
+</body>
 </html>
