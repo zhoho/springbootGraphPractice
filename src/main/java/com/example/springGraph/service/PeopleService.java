@@ -26,7 +26,8 @@ public class PeopleService {
     public Map<Integer, Long> getAgeDistribution() {
         List<People> peopleList = peopleRepository.findAll();
         Map<Integer, Long> ageDistribution = peopleList.stream()
-                .collect(Collectors.groupingBy(People::getAge, Collectors.counting()));
+                .collect(Collectors.groupingBy(person -> (person.getAge() / 10) * 10, // 연령대를 계산 (예: 25 -> 20, 37 -> 30)
+                        Collectors.counting()));
         return ageDistribution;
     }
 
@@ -49,5 +50,16 @@ public class PeopleService {
                 ));
         return femalesCountByAgeGroup;
     }
+
+    public Map<Integer, Long> countMalesByAgeGroup() {
+        List<People> peopleList = peopleRepository.findAll();
+        return peopleList.stream()
+                .filter(person -> "Male".equals(person.getGender()))
+                .collect(Collectors.groupingBy(
+                        person -> (person.getAge() / 10) * 10,
+                        Collectors.counting()
+                ));
+    }
+
 
 }

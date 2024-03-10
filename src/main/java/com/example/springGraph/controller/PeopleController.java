@@ -6,6 +6,7 @@ import com.example.springGraph.service.PeopleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Map;
 
@@ -33,4 +34,11 @@ public class PeopleController {
 
         return "index";  // Thymeleaf 템플릿 반환
     }
+
+    @GetMapping("/male/age-distribution")
+    @ResponseBody
+    public Map<Integer, Long> getMaleAgeDistribution() {
+        return peopleService.countMalesByAgeGroup();
+    }
+
 }
