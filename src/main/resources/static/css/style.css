@@ -1,0 +1,19 @@
+body {
+    text-align: center; /* 내용 중앙 정렬 */
+    margin-top: 20px;
+}
+.btn-group .btn {
+    padding: 0.375rem 0.75rem; /* 버튼의 패딩 */
+    font-size: 0.875rem; /* 버튼의 폰트 크기를 줄임 */
+}
+.btn-group {
+    justify-content: flex-end; /* 버튼 그룹을 오른쪽으로 정렬 */
+    width: 700px;
+    margin: auto;
+    margin-bottom: 20px;
+}
+#mixedChart {
+    width: 1000px; /* 그래프의 너비 */
+    height: 700px; /* 그래프의 높이*/
+    margin: auto; /* 중앙 정렬 */
+}
