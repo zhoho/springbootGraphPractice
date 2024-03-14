@@ -17,3 +17,13 @@ body {
     height: 700px; /* 그래프의 높이*/
     margin: auto; /* 중앙 정렬 */
 }
+#barChart {
+    width: 1000px; /* 그래프의 너비 */
+    height: 700px; /* 그래프의 높이*/
+    margin: auto; /* 중앙 정렬 */
+}
+#stackedBarChart {
+    width: 1000px; /* 그래프의 너비 */
+    height: 700px; /* 그래프의 높이*/
+    margin: auto; /* 중앙 정렬 */
+}
