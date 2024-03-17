@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <link th:href="@{/css/style.css}" rel="stylesheet" />
 </head>
 <body>
 <div class="container">
@@ -59,10 +60,10 @@
                 data: {
                     labels: Object.keys(ageDistribution),
                     datasets: [{
-                        label: '연령 분포',
+                        label: '연령대별 분포',
                         data: Object.values(ageDistribution),
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
                     }, {
                         label: '성별 분포 (기본: 여성)',
                         data: Object.values(femalesByAgeGroup),
@@ -103,20 +104,20 @@
                 datasets: [{
                     label: '연령대별 분포',
                     data: Object.values(ageDistribution),
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
                     borderWidth: 1
                 }, {
                     label: '성별 분포 (여성)',
                     data: Object.values(femalesByAgeGroup),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
                     borderWidth: 1
                 }, {
                     label: '성별 분포 (남성)',
                     data: Object.values(malesByAgeGroup),
-                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
                 }]
             },
@@ -137,13 +138,18 @@
             data: {
                 labels: Object.keys(ageDistribution),
                 datasets: [{
-                    label: '여성',
+                    label: '연령대별 분포',
+                    data: Object.values(ageDistribution),
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                },
+                    {
+                    label: '성별 분포 (여성)',
                     data: Object.values(femalesByAgeGroup),
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 }, {
-                    label: '남성',
+                    label: '성별 분포 (남성)',
                     data: Object.values(malesByAgeGroup),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 }]
             },
             options: {
