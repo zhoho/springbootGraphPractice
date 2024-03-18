@@ -1,10 +1,11 @@
 package com.example.springGraph.controller;
 
 import com.example.springGraph.entity.People;
-import org.springframework.stereotype.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.example.springGraph.service.PeopleService;
 
@@ -34,22 +35,18 @@ public class PeopleController {
         return peopleService.getAllPeople();
     }
 
-    @GetMapping("/female/count")
+    // 성별에 따른 사람 수를 반환하는 경로
+    @GetMapping("/people/count")
     @ResponseBody
-    public Long getFemaleCount() {
-        return peopleService.getFemaleCount();
+    public Long getCountByGender(@RequestParam(required = false) String gender) {
+        return peopleService.getCountByGender(gender);
     }
 
-    @GetMapping("/female/age-distribution")
+    // 성별에 따른 연령 분포를 반환하는 경로
+    @GetMapping("/people/age-distribution")
     @ResponseBody
-    public Map<Integer, Long> getFemalesByAgeGroup() {
-        return peopleService.countFemalesByAgeGroup();
-    }
-
-    // 이미 고유한 경로가 있으므로 변경할 필요가 없습니다.
-    @GetMapping("/male/age-distribution")
-    @ResponseBody
-    public Map<Integer, Long> getMaleAgeDistribution() {
-        return peopleService.countMalesByAgeGroup();
+    public Map<Integer, Long> getAgeDistributionByGender(@RequestParam(required = false) String gender) {
+        return peopleService.getAgeDistributionByGender(gender);
     }
 }
+

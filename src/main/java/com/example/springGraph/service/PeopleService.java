@@ -27,54 +27,45 @@ public class PeopleService {
     public Map<Integer, Long> initializeAgeDistribution() {
         Map<Integer, Long> ageDistribution = new TreeMap<>();
         for (int i = 0; i <= 90; i += 10) {
-            ageDistribution.put(i, 0L); // 0부터 90까지 10단위로 초기화
+            ageDistribution.put(i, 0L); // Initialize age distribution map
         }
         return ageDistribution;
     }
 
     public Map<Integer, Long> getAgeDistribution() {
-        List<People> peopleList = peopleRepository.findAll();
-        Map<Integer, Long> ageDistribution = peopleList.stream()
-                .collect(Collectors.groupingBy(person -> (person.getAge() / 10) * 10, // 연령대를 계산 (예: 25 -> 20, 37 -> 30)
-                        Collectors.counting()));
-        Map<Integer, Long> completeAgeDistribution = initializeAgeDistribution(); // 위에서 정의한 메소드 사용
+        return calculateAgeDistribution(null);
+    }
+
+    public Long getCountByGender(String gender) {
+        return peopleRepository.findAll().stream()
+                .filter(person -> gender == null || gender.equalsIgnoreCase(person.getGender()))
+                .count();
+    }
+
+    public Map<Integer, Long> getAgeDistributionByGender(String gender) {
+        return calculateAgeDistribution(gender);
+    }
+
+    private Map<Integer, Long> calculateAgeDistribution(String gender) {
+        List<People> filteredList;
+        if (gender != null && !gender.isEmpty()) {
+            filteredList = peopleRepository.findAll().stream()
+                    .filter(person -> gender.equalsIgnoreCase(person.getGender()))
+                    .collect(Collectors.toList());
+        } else {
+            filteredList = peopleRepository.findAll();
+        }
+
+        Map<Integer, Long> ageDistribution = filteredList.stream()
+                .collect(Collectors.groupingBy(
+                        person -> (person.getAge() / 10) * 10,
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
+
+        Map<Integer, Long> completeAgeDistribution = initializeAgeDistribution();
         completeAgeDistribution.forEach((age, count) -> ageDistribution.merge(age, count, Long::sum));
         return ageDistribution;
     }
-
-    public Long getFemaleCount() {
-        List<People> peopleList = peopleRepository.findAll();
-        Long femaleCount = peopleList.stream()
-                .filter(person -> "Female".equals(person.getGender()))
-                .count();
-        return femaleCount;
-    }
-
-    public Map<Integer, Long> countFemalesByAgeGroup() {
-        List<People> peopleList = peopleRepository.findAll();
-        Map<Integer, Long> femalesCountByAgeGroup = peopleList.stream()
-                .filter(person -> "Female".equals(person.getGender()))
-                .collect(Collectors.groupingBy(
-                        person -> (person.getAge() / 10) * 10,
-                        Collectors.counting()
-                ));
-
-        Map<Integer, Long> completeAgeDistribution = initializeAgeDistribution(); // 미리 정의된 연령대 분포 맵
-        completeAgeDistribution.forEach((age, count) -> femalesCountByAgeGroup.merge(age, count, Long::sum));
-        return femalesCountByAgeGroup;
-    }
-
-    public Map<Integer, Long> countMalesByAgeGroup() {
-        List<People> peopleList = peopleRepository.findAll();
-        Map<Integer, Long> malesCountByAgeGroup = peopleList.stream()
-                .filter(person -> "Male".equals(person.getGender()))
-                .collect(Collectors.groupingBy(
-                        person -> (person.getAge() / 10) * 10,
-                        Collectors.counting()
-                ));
-
-        Map<Integer, Long> completeAgeDistribution = initializeAgeDistribution(); // 미리 정의된 연령대 분포 맵
-        completeAgeDistribution.forEach((age, count) -> malesCountByAgeGroup.merge(age, count, Long::sum));
-        return malesCountByAgeGroup;
-    }
 }
+

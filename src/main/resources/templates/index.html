@@ -8,9 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <link th:href="@{/css/style.css}" rel="stylesheet" />
+    <script th:src="@{/js/getweather.js}"></script>
 </head>
 <body>
 <div class="container">
+    <div class="container">
+        <label for="latitude">위도:</label>
+        <input type="text" id="latitude" name="latitude">
+        <label for="longitude">경도:</label>
+        <input type="text" id="longitude" name="longitude">
+        <button id="getWeather">날씨 확인</button>
+        <div id="location"></div>
+        <div id="weather-data"></div>
     <h1 class="mt-5">연령별 및 성별 그래프</h1>
     <div class="btn-group mt-3">
         <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
@@ -31,134 +41,77 @@
 </div>
 
 <script>
+
     $(document).ready(function() {
-        // AJAX 요청
-        const ageDistributionPromise = $.ajax({url: '/age-distribution', type: 'GET'});
-        const femaleAgeDistributionPromise = $.ajax({url: '/female/age-distribution', type: 'GET'});
-        const maleAgeDistributionPromise = $.ajax({url: '/male/age-distribution', type: 'GET'});
+        var mixedChartInstance = null;
 
-        Promise.all([ageDistributionPromise, femaleAgeDistributionPromise, maleAgeDistributionPromise])
-            .then(function(results) {
-                const ageDistribution = results[0];
-                const femalesByAgeGroup = results[1];
-                const malesByAgeGroup = results[2];
+        function getGenderAgeDistribution(gender) {
+            return $.ajax({url: `/people/age-distribution?gender=${gender}`, type: 'GET'});
+        }
 
-                // 모든 차트 초기화 함수 호출
-                initializeCharts(ageDistribution, femalesByAgeGroup, malesByAgeGroup);
-                initializeBarChart(ageDistribution, femalesByAgeGroup, malesByAgeGroup);
-                initializeStackedBarChart(ageDistribution, femalesByAgeGroup, malesByAgeGroup);
-            })
-            .catch(function(error) {
+        function updateCharts(gender) {
+            const genderLabel = gender === 'Female' ? '여성' : '남성';
+            // 여기서 $.when을 사용하여 두 Promise가 모두 완료될 때까지 기다립니다.
+            $.when(
+                $.ajax({url: '/age-distribution', type: 'GET'}),
+                getGenderAgeDistribution(gender)
+            ).done(function(ageDistributionResponse, genderAgeDistributionResponse) {
+                // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는
+                // [data, textStatus, jqXHR] 형식의 배열입니다.
+                initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);
+            }).fail(function(error) {
                 console.log("Error loading data:", error);
             });
-
-        function initializeCharts(ageDistribution, femalesByAgeGroup, malesByAgeGroup) {
-            const ctx = document.getElementById('mixedChart');
-            const mixedChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(ageDistribution),
-                    datasets: [{
-                        label: '연령 분포',
-                        data: Object.values(ageDistribution),
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        borderColor: 'rgb(54, 162, 235)',
-                    }, {
-                        label: '성별 분포 (기본: 여성)',
-                        data: Object.values(femalesByAgeGroup),
-                        type: 'line',
-                        borderColor: 'rgb(255, 99, 132)',
-                        fill: false,
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                        }
-                    }
-                }
-            });
-
-            $('#btnradio1').click(function() {
-                mixedChart.data.datasets[1].data = Object.values(femalesByAgeGroup);
-                mixedChart.data.datasets[1].label = '성별 분포 (여성)';
-                mixedChart.update();
-            });
-
-            $('#btnradio2').click(function() {
-                mixedChart.data.datasets[1].data = Object.values(malesByAgeGroup);
-                mixedChart.data.datasets[1].label = '성별 분포 (남성)';
-                mixedChart.update();
-            });
         }
-    });
 
-    function initializeBarChart(ageDistribution, femalesByAgeGroup, malesByAgeGroup) {
-        const barCtx = document.getElementById('barChart');
-        let barChart = new Chart(barCtx, {
-            type: 'bar',
-            data: {
+        // 라디오 버튼 이벤트 핸들러
+        $('#btnradio1').click(function() {
+            updateCharts('Female');
+        });
+
+        $('#btnradio2').click(function() {
+            updateCharts('Male');
+        });
+
+        // 초기 차트 로딩
+        updateCharts('Female');
+        function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {
+            const chartData = {
                 labels: Object.keys(ageDistribution),
                 datasets: [{
                     label: '연령대별 분포',
                     data: Object.values(ageDistribution),
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }, {
-                    label: '성별 분포 (여성)',
-                    data: Object.values(femalesByAgeGroup),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }, {
-                    label: '성별 분포 (남성)',
-                    data: Object.values(malesByAgeGroup),
                     backgroundColor: 'rgba(255, 206, 86, 0.2)',
                     borderColor: 'rgba(255, 206, 86, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    function initializeStackedBarChart(ageDistribution, femalesByAgeGroup, malesByAgeGroup) {
-        const stackedCtx = document.getElementById('stackedBarChart');
-        let stackedBarChart = new Chart(stackedCtx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(ageDistribution),
-                datasets: [{
-                    label: '여성',
-                    data: Object.values(femalesByAgeGroup),
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 }, {
-                    label: '남성',
-                    data: Object.values(malesByAgeGroup),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    label: `성별 분포 (${genderLabel})`,
+                    data: Object.values(genderAgeDistribution),
+                    type: 'line',
+                    borderColor: genderLabel === '여성' ? 'rgb(255, 99, 132)' : 'rgb(54, 162, 235)',
+                    fill: false,
                 }]
-            },
-            options: {
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
+            };
+
+            if (mixedChartInstance) {
+                mixedChartInstance.data = chartData;
+                mixedChartInstance.update();
+            } else {
+                const ctx = document.getElementById('mixedChart');
+                mixedChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            }
+                        }
                     }
-                }
+                });
             }
-        });
-    }
+        }
+        // initializeBarChart 및 initializeStackedBarChart 함수도 유사한 방식으로 수정 필요
+    });
 </script>
 
 </body>
