@@ -21,22 +21,22 @@
         <button id="getWeather">날씨 확인</button>
         <div id="location"></div>
         <div id="weather-data"></div>
-    <h1 class="mt-5">연령별 및 성별 그래프</h1>
-    <div class="btn-group mt-3">
-        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
-        <label class="btn btn-outline-primary" for="btnradio1">여성</label>
-        <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
-        <label class="btn btn-outline-primary" for="btnradio2">남성</label>
-    </div>
-    <div>
-        <canvas id="mixedChart"></canvas>
-    </div>
-    <!-- 추가된 캔버스 요소들 -->
-    <div>
-        <canvas id="barChart"></canvas>
-    </div>
-    <div>
-        <canvas id="stackedBarChart"></canvas>
+        <h1 class="mt-5">연령별 및 성별 그래프</h1>
+        <div class="btn-group mt-3">
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="btnradio1">여성</label>
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+            <label class="btn btn-outline-primary" for="btnradio2">남성</label>
+        </div>
+        <div>
+            <canvas id="mixedChart"></canvas>
+        </div>
+        <div>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div>
+            <canvas id="stackedBarChart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -55,26 +55,27 @@
             $.when(
                 $.ajax({url: '/age-distribution', type: 'GET'}),
                 getGenderAgeDistribution(gender)
-            ).done(function(ageDistributionResponse, genderAgeDistributionResponse) {
+            ).done(function (ageDistributionResponse, genderAgeDistributionResponse) {
                 // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는
                 // [data, textStatus, jqXHR] 형식의 배열입니다.
                 initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);
-            }).fail(function(error) {
+            }).fail(function (error) {
                 console.log("Error loading data:", error);
             });
         }
 
         // 라디오 버튼 이벤트 핸들러
-        $('#btnradio1').click(function() {
+        $('#btnradio1').click(function () {
             updateCharts('Female');
         });
 
-        $('#btnradio2').click(function() {
+        $('#btnradio2').click(function () {
             updateCharts('Male');
         });
 
         // 초기 차트 로딩
         updateCharts('Female');
+
         function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {
             const chartData = {
                 labels: Object.keys(ageDistribution),
@@ -110,8 +111,122 @@
                 });
             }
         }
-        // initializeBarChart 및 initializeStackedBarChart 함수도 유사한 방식으로 수정 필요
-    });
+
+        initializeBarChart(); // 바 차트 초기화 호출 추가
+        function initializeBarChart() {
+            const barCtx = document.getElementById('barChart');
+            $.ajax({
+                url: '/age-distribution',
+                method: 'GET',
+                success: function (ageDistribution) {
+                    // AJAX request for female age distribution
+                    $.ajax({
+                        url: '/people/age-distribution',
+                        data: {gender: 'Female'},
+                        method: 'GET',
+                        success: function (femalesByAgeGroup) {
+                            $.ajax({
+                                url: '/people/age-distribution',
+                                data: {gender: 'Male'},
+                                method: 'GET',
+                                success: function (malesByAgeGroup) {
+                                    let barChart = new Chart(barCtx, {
+                                        type: 'bar',
+                                        data: {
+                                            labels: Object.keys(ageDistribution),
+                                            datasets: [{
+                                                label: '연령대별 분포',
+                                                data: Object.values(ageDistribution),
+                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                                                borderColor: 'rgba(255, 206, 86, 1)',
+                                                borderWidth: 1
+                                            }, {
+                                                label: '성별 분포 (여성)',
+                                                data: Object.values(femalesByAgeGroup),
+                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                                borderColor: 'rgba(255, 99, 132, 1)',
+                                                borderWidth: 1
+                                            }, {
+                                                label: '성별 분포 (남성)',
+                                                data: Object.values(malesByAgeGroup),
+                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                                borderColor: 'rgba(54, 162, 235, 1)',
+                                                borderWidth: 1
+                                            }]
+                                        },
+                                        options: {
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        initializeStackedBarChart(); // 스택형 바 차트 초기화 함수 호출
+        function initializeStackedBarChart() {
+            // AJAX 요청으로 전체 연령 분포 데이터 가져오기
+            $.ajax({
+                url: '/age-distribution',
+                method: 'GET',
+                success: function (ageDistribution) {
+                    // AJAX 요청으로 여성의 연령별 분포 데이터 가져오기
+                    $.ajax({
+                        url: '/people/age-distribution',
+                        data: {gender: 'Female'},
+                        method: 'GET',
+                        success: function (femalesByAgeGroup) {
+                            // AJAX 요청으로 남성의 연령별 분포 데이터 가져오기
+                            $.ajax({
+                                url: '/people/age-distribution',
+                                data: {gender: 'Male'},
+                                method: 'GET',
+                                success: function (malesByAgeGroup) {
+                                    // 모든 데이터가 준비되면 차트 초기화
+                                    const stackedCtx = document.getElementById('stackedBarChart');
+                                    let stackedBarChart = new Chart(stackedCtx, {
+                                        type: 'bar',
+                                        data: {
+                                            labels: Object.keys(ageDistribution),
+                                            datasets: [{
+                                                label: '연령대별 분포',
+                                                data: Object.values(ageDistribution),
+                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                                            }, {
+                                                label: '성별 분포 (여성)',
+                                                data: Object.values(femalesByAgeGroup),
+                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            }, {
+                                                label: '성별 분포 (남성)',
+                                                data: Object.values(malesByAgeGroup),
+                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                            }]
+                                        },
+                                        options: {
+                                            scales: {
+                                                x: {
+                                                    stacked: true,
+                                                },
+                                                y: {
+                                                    stacked: true,
+                                                    beginAtZero: true,
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }})
 </script>
 
 </body>
