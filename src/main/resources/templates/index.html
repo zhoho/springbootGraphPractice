@@ -18,7 +18,9 @@
         <input type="text" id="latitude" name="latitude">
         <label for="longitude">경도:</label>
         <input type="text" id="longitude" name="longitude">
-        <button id="getWeather">날씨 확인</button>
+        <button id="getWeather">날씨 확인1231</button>
+        <button onclick="getWeather()">Get Weather</button>
+        <div id="weather-text"></div>
         <div id="location"></div>
         <div id="weather-data"></div>
         <h1 class="mt-5">연령별 및 성별 그래프</h1>
@@ -39,7 +41,122 @@
         </div>
     </div>
 </div>
+<script>
+    // function getWeather(){
+    //     var xhr = new XMLHttpRequest();
+    //     var url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
+    //     var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
+    //     queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+    //     queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('10'); // 필요한 행 수로 조정 가능
+    //     queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
+    //     queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0600'); // 실제 조회하고자 하는 시간으로 조정
+    //     queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent('55'); // 실제 위치의 좌표로 조정
+    //     queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent('127'); // 실제 위치의 좌표로 조정
+    //     xhr.open('GET', url + queryParams);
+    //     xhr.onreadystatechange = function (){
+    //         if(this.readyState === 4 && this.status === 200){
+    //             var parser = new DOMParser();
+    //             var xmlDoc = parser.parseFromString(this.responseText, "text/xml");
+    //             var items = xmlDoc.getElementsByTagName('item');
+    //
+    //             var weatherData = {}; // 추출한 날씨 데이터를 저장할 객체
+    //
+    //             // 각 아이템을 순회하며 필요한 데이터 추출
+    //             for (var i = 0; i < items.length; i++) {
+    //                 var category = items[i].getElementsByTagName('category')[0].childNodes[0].nodeValue;
+    //                 var value = items[i].getElementsByTagName('obsrValue')[0].childNodes[0].nodeValue;
+    //
+    //                 switch(category) {
+    //                     case 'T1H': // 기온
+    //                         weatherData.temperature = value + '°C';
+    //                         break;
+    //                     case 'PTY': // 강수 형태
+    //                         weatherData.precipitationType = value; // 0: 없음, 1: 비, 2: 비/눈, 3: 눈, 4: 소나기
+    //                         break;
+    //                     case 'SKY': // 하늘 상태
+    //                         weatherData.skyCondition = value; // 1: 맑음, 3: 구름 많음, 4: 흐림
+    //                         break;
+    //                     case 'RN1': // 1시간 강수량
+    //                         weatherData.rainfall1h = value + 'mm';
+    //                         break;
+    //                 }
+    //             }
+    //             console.log(this.responseText);
+    //             // 추출한 날씨 데이터를 화면에 표시
+    //             var weatherText = document.getElementById('weather-text');
+    //             weatherText.textContent = `기온: ${weatherData.temperature}, 강수 형태: ${weatherData.precipitationType}, 하늘 상태: ${weatherData.skyCondition}, 1시간 강수량: ${weatherData.rainfall1h}`;
+    //         }
+    //     };
+    //     xhr.send();
+    // }
+    function getWeather() {
+        var xhr = new XMLHttpRequest();
+        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst'; // HTTPS 사용(지원하는 경우)
+        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D'; // 실제 서비스 키로 교체
+        queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('1000');
+        queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
+        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240402'); // 현재 날짜로 교체
+        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('1200'); // 현재 시간 기준 직전 발표 시간으로 교체
+        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent('60');
+        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent('127');
+        xhr.open('GET', url + queryParams);
 
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(this.responseText, "application/xml");
+                var items = xmlDoc.getElementsByTagName('item');
+                var weatherData = {
+                    temperature: null,
+                    skyCondition: null,
+                    precipitationType: null,
+                    rainfall1h: null
+                };
+
+                for (var i = 0; i < items.length; i++) {
+                    var category = items[i].getElementsByTagName('category')[0].childNodes[0].nodeValue;
+                    var value = items[i].getElementsByTagName('obsrValue')[0].childNodes[0].nodeValue;
+
+                    switch (category) {
+                        case 'T1H': // 기온
+                            weatherData.temperature = value + '°C';
+                            break;
+                        case 'PTY': // 강수 형태
+                            weatherData.precipitationType = value; // 0: 없음, 1: 비, 2: 비/눈, 3: 눈, 4: 소나기
+                            break;
+                        case 'SKY': // 하늘 상태
+                            weatherData.skyCondition = value; // 1: 맑음, 3: 구름 많음, 4: 흐림
+                            break;
+                        case 'RN1': // 1시간 강수량
+                            weatherData.rainfall1h = value + 'mm';
+                            break;
+                    }
+                }
+
+                // 여기서 날씨 상태에 따른 아이콘을 선택할 수 있습니다.
+                // 예시로는 console.log로 출력하고 있으나, 실제로는 아이콘 이미지를 동적으로 변경할 수 있습니다.
+                console.log("현재 기온: " + weatherData.temperature);
+                console.log("하늘 상태: " + weatherData.skyCondition);
+                console.log("강수 형태: " + weatherData.precipitationType);
+                console.log("1시간 강수량: " + weatherData.rainfall1h);
+
+                // 예를 들어, 하늘 상태(SKY)에 따른 아이콘 로직을 구현할 수 있습니다.
+                // 이 부분은 실제 이미지 경로나 아이콘 클래스에 따라 다를 수 있습니다.
+                var skyIcon = '';
+                switch(weatherData.skyCondition) {
+                    case '1': skyIcon = '맑음 아이콘 경로 또는 클래스'; break;
+                    case '3': skyIcon = '구름 많음 아이콘 경로 또는 클래스'; break;
+                    case '4': skyIcon = '흐림 아이콘 경로 또는 클래스'; break;
+                }
+                console.log("하늘 상태 아이콘: " + skyIcon);
+            }
+        };
+
+        xhr.send('');
+
+    }
+</script>
 <script>
 
     $(document).ready(function() {

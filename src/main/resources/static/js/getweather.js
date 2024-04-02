@@ -7,7 +7,7 @@ $(document).ready(function() {
 
         $.get(url, function(data) {
             var location = data.name;
-            var temperature = data.main.temp;
+            var temperature = Math.round(data.main.temp);
             var weatherDescription = data.weather[0].description;
             var iconCode = data.weather[0].icon;
             var iconUrl = "https://openweathermap.org/img/w/" + iconCode + ".png";
@@ -15,11 +15,11 @@ $(document).ready(function() {
             var windDirection = data.wind.deg;
             var humidity = data.main.humidity;
             var pressure = data.main.pressure;
-            var tempMax = data.main.temp_max;
-            var tempMin = data.main.temp_min;
             var clouds = data.clouds.all;
             var sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
             var sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
+
+            console.log(data);
 
             $('#location').html('위치: ' + location);
             $('#weather-data').html('기온: ' + temperature + '°C, 상태: ' + weatherDescription +
@@ -27,7 +27,6 @@ $(document).ready(function() {
                 ', 풍속: ' + windSpeed + ' m/s, 풍향: ' + windDirection + '°' +
                 ', 습도: ' + humidity + '%' +
                 ', 기압: ' + pressure + ' hPa' +
-                ', 최고 기온: ' + tempMax + '°C, 최저 기온: ' + tempMin + '°C' +
                 ', 구름량: ' + clouds + '%' +
                 ', 일출 시간: ' + sunrise + ', 일몰 시간: ' + sunset);
         }).fail(function() {

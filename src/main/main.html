@@ -1,45 +1,256 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Graph Practice</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <link th:href="@{/css/style.css}" rel="stylesheet" />
+    <script th:src="@{/js/getweather.js}"></script>
 </head>
 <body>
-  <h1>hello world!</h1>
-</body>
-
-<div>
-  <canvas id="myChart"></canvas>
+<div class="container">
+    <div class="container">
+        <label for="latitude">위도:</label>
+        <input type="text" id="latitude" name="latitude">
+        <label for="longitude">경도:</label>
+        <input type="text" id="longitude" name="longitude">
+        <button id="getWeather">날씨 확인1231</button>
+        <button onclick="getWeather()">Get Weather</button>
+        <div id="weather-text"></div>
+        <div id="location"></div>
+        <div id="weather-data"></div>
+        <h1 class="mt-5">연령별 및 성별 그래프</h1>
+        <div class="btn-group mt-3">
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="btnradio1">여성</label>
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+            <label class="btn btn-outline-primary" for="btnradio2">남성</label>
+        </div>
+        <div>
+            <canvas id="mixedChart"></canvas>
+        </div>
+        <div>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div>
+            <canvas id="stackedBarChart"></canvas>
+        </div>
+    </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-  const ctx = document.getElementById('myChart');
-
-  new Chart(ctx, {
-    data: {
-      datasets: [{
-        type: 'bar',
-        label: 'Bar Dataset',
-        data: [10, 20, 30, 40]
-      }, {
-        type: 'line',
-        label: 'Line Dataset',
-        data: [10, 50, 4, 0],
-      }],
-      labels: ['January', 'February', 'March', 'April']
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
+    function getWeather(){
+        var xhr=new XMLHttpRequest();
+        var url='http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst'
+        var queryParams='?' + encodeURIComponent('serviceKey') + '='+'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
+        queryParams+='&' + encodeURIComponent('pageNo')+'='+encodeURIComponent('1');
+        queryParams+='&' + encodeURIComponent('numOfRows')+'='+encodeURIComponent('1000');
+        queryParams+='&' + encodeURIComponent('dataType')+'='+encodeURIComponent('JSON');
+        queryParams+='&' + encodeURIComponent('base_time')+'='+encodeURIComponent('0600');
+        queryParams+='&' + encodeURIComponent('nx')+'='+encodeURIComponent('102');
+        queryParams+='&' + encodeURIComponent('ny')+'='+encodeURIComponent('84');
+        xhr.open('GET',url+queryParams);
+        xhr.onreadystatechange=function (){
+            if(this.readyState===4 && this.status===200){
+                var responese=this.responseText;
+                var weatherText=document.getElementById('weather-text');
+                weatherText.textContent=responese;
+            }
+        };
+        xhr.send('');
     }
-  });
+</script>
+<script>
 
+    $(document).ready(function() {
+        var mixedChartInstance = null;
 
+        function getGenderAgeDistribution(gender) {
+            return $.ajax({url: `/people/age-distribution?gender=${gender}`, type: 'GET'});
+        }
+
+        function updateCharts(gender) {
+            const genderLabel = gender === 'Female' ? '여성' : '남성';
+            // 여기서 $.when을 사용하여 두 Promise가 모두 완료될 때까지 기다립니다.
+            $.when(
+                $.ajax({url: '/age-distribution', type: 'GET'}),
+                getGenderAgeDistribution(gender)
+            ).done(function (ageDistributionResponse, genderAgeDistributionResponse) {
+                // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는
+                // [data, textStatus, jqXHR] 형식의 배열입니다.
+                initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);
+            }).fail(function (error) {
+                console.log("Error loading data:", error);
+            });
+        }
+
+        // 라디오 버튼 이벤트 핸들러
+        $('#btnradio1').click(function () {
+            updateCharts('Female');
+        });
+
+        $('#btnradio2').click(function () {
+            updateCharts('Male');
+        });
+
+        // 초기 차트 로딩
+        updateCharts('Female');
+
+        function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {
+            const chartData = {
+                labels: Object.keys(ageDistribution),
+                datasets: [{
+                    label: '연령대별 분포',
+                    data: Object.values(ageDistribution),
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                }, {
+                    label: `성별 분포 (${genderLabel})`,
+                    data: Object.values(genderAgeDistribution),
+                    type: 'line',
+                    borderColor: genderLabel === '여성' ? 'rgb(255, 99, 132)' : 'rgb(54, 162, 235)',
+                    fill: false,
+                }]
+            };
+
+            if (mixedChartInstance) {
+                mixedChartInstance.data = chartData;
+                mixedChartInstance.update();
+            } else {
+                const ctx = document.getElementById('mixedChart');
+                mixedChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        initializeBarChart(); // 바 차트 초기화 호출 추가
+        function initializeBarChart() {
+            const barCtx = document.getElementById('barChart');
+            $.ajax({
+                url: '/age-distribution',
+                method: 'GET',
+                success: function (ageDistribution) {
+                    // AJAX request for female age distribution
+                    $.ajax({
+                        url: '/people/age-distribution',
+                        data: {gender: 'Female'},
+                        method: 'GET',
+                        success: function (femalesByAgeGroup) {
+                            $.ajax({
+                                url: '/people/age-distribution',
+                                data: {gender: 'Male'},
+                                method: 'GET',
+                                success: function (malesByAgeGroup) {
+                                    let barChart = new Chart(barCtx, {
+                                        type: 'bar',
+                                        data: {
+                                            labels: Object.keys(ageDistribution),
+                                            datasets: [{
+                                                label: '연령대별 분포',
+                                                data: Object.values(ageDistribution),
+                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                                                borderColor: 'rgba(255, 206, 86, 1)',
+                                                borderWidth: 1
+                                            }, {
+                                                label: '성별 분포 (여성)',
+                                                data: Object.values(femalesByAgeGroup),
+                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                                borderColor: 'rgba(255, 99, 132, 1)',
+                                                borderWidth: 1
+                                            }, {
+                                                label: '성별 분포 (남성)',
+                                                data: Object.values(malesByAgeGroup),
+                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                                borderColor: 'rgba(54, 162, 235, 1)',
+                                                borderWidth: 1
+                                            }]
+                                        },
+                                        options: {
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        initializeStackedBarChart(); // 스택형 바 차트 초기화 함수 호출
+        function initializeStackedBarChart() {
+            // AJAX 요청으로 전체 연령 분포 데이터 가져오기
+            $.ajax({
+                url: '/age-distribution',
+                method: 'GET',
+                success: function (ageDistribution) {
+                    // AJAX 요청으로 여성의 연령별 분포 데이터 가져오기
+                    $.ajax({
+                        url: '/people/age-distribution',
+                        data: {gender: 'Female'},
+                        method: 'GET',
+                        success: function (femalesByAgeGroup) {
+                            // AJAX 요청으로 남성의 연령별 분포 데이터 가져오기
+                            $.ajax({
+                                url: '/people/age-distribution',
+                                data: {gender: 'Male'},
+                                method: 'GET',
+                                success: function (malesByAgeGroup) {
+                                    // 모든 데이터가 준비되면 차트 초기화
+                                    const stackedCtx = document.getElementById('stackedBarChart');
+                                    let stackedBarChart = new Chart(stackedCtx, {
+                                        type: 'bar',
+                                        data: {
+                                            labels: Object.keys(ageDistribution),
+                                            datasets: [{
+                                                label: '연령대별 분포',
+                                                data: Object.values(ageDistribution),
+                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                                            }, {
+                                                label: '성별 분포 (여성)',
+                                                data: Object.values(femalesByAgeGroup),
+                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            }, {
+                                                label: '성별 분포 (남성)',
+                                                data: Object.values(malesByAgeGroup),
+                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                            }]
+                                        },
+                                        options: {
+                                            scales: {
+                                                x: {
+                                                    stacked: true,
+                                                },
+                                                y: {
+                                                    stacked: true,
+                                                    beginAtZero: true,
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }})
 </script>
 
+</body>
 </html>
