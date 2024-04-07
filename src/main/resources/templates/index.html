@@ -18,8 +18,17 @@
         <input type="text" id="latitude" name="latitude">
         <label for="longitude">경도:</label>
         <input type="text" id="longitude" name="longitude">
-        <button id="getWeather">날씨 확인1231</button>
+        <button id="getWeather">날씨 확인 (위도 경도)</button>
         <button onclick="getWeather()">Get Weather</button>
+        <div id="weatherInfo">
+            <h2>현재 날씨 상태</h2>
+            <p id="temperature">기온: </p>
+            <p id="skyCondition">하늘 상태: </p>
+            <p id="precipitationType">강수 형태: </p>
+            <p id="rainfall1h">동서 바람 : </p>
+            <p id="mintemperature">풍향: </p>
+            <img id="weatherIcon" src="" alt="날씨 아이콘" style="width:100px; height:100px;">
+        </div>
         <div id="weather-text"></div>
         <div id="location"></div>
         <div id="weather-data"></div>
@@ -42,62 +51,15 @@
     </div>
 </div>
 <script>
-    // function getWeather(){
-    //     var xhr = new XMLHttpRequest();
-    //     var url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
-    //     var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
-    //     queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
-    //     queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('10'); // 필요한 행 수로 조정 가능
-    //     queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
-    //     queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0600'); // 실제 조회하고자 하는 시간으로 조정
-    //     queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent('55'); // 실제 위치의 좌표로 조정
-    //     queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent('127'); // 실제 위치의 좌표로 조정
-    //     xhr.open('GET', url + queryParams);
-    //     xhr.onreadystatechange = function (){
-    //         if(this.readyState === 4 && this.status === 200){
-    //             var parser = new DOMParser();
-    //             var xmlDoc = parser.parseFromString(this.responseText, "text/xml");
-    //             var items = xmlDoc.getElementsByTagName('item');
-    //
-    //             var weatherData = {}; // 추출한 날씨 데이터를 저장할 객체
-    //
-    //             // 각 아이템을 순회하며 필요한 데이터 추출
-    //             for (var i = 0; i < items.length; i++) {
-    //                 var category = items[i].getElementsByTagName('category')[0].childNodes[0].nodeValue;
-    //                 var value = items[i].getElementsByTagName('obsrValue')[0].childNodes[0].nodeValue;
-    //
-    //                 switch(category) {
-    //                     case 'T1H': // 기온
-    //                         weatherData.temperature = value + '°C';
-    //                         break;
-    //                     case 'PTY': // 강수 형태
-    //                         weatherData.precipitationType = value; // 0: 없음, 1: 비, 2: 비/눈, 3: 눈, 4: 소나기
-    //                         break;
-    //                     case 'SKY': // 하늘 상태
-    //                         weatherData.skyCondition = value; // 1: 맑음, 3: 구름 많음, 4: 흐림
-    //                         break;
-    //                     case 'RN1': // 1시간 강수량
-    //                         weatherData.rainfall1h = value + 'mm';
-    //                         break;
-    //                 }
-    //             }
-    //             console.log(this.responseText);
-    //             // 추출한 날씨 데이터를 화면에 표시
-    //             var weatherText = document.getElementById('weather-text');
-    //             weatherText.textContent = `기온: ${weatherData.temperature}, 강수 형태: ${weatherData.precipitationType}, 하늘 상태: ${weatherData.skyCondition}, 1시간 강수량: ${weatherData.rainfall1h}`;
-    //         }
-    //     };
-    //     xhr.send();
-    // }
     function getWeather() {
         var xhr = new XMLHttpRequest();
-        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst'; // HTTPS 사용(지원하는 경우)
+        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst'; // HTTPS 사용(지원하는 경우)
         var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D'; // 실제 서비스 키로 교체
         queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
-        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('1000');
+        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');
         queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
-        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240402'); // 현재 날짜로 교체
-        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('1200'); // 현재 시간 기준 직전 발표 시간으로 교체
+        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240407'); // 현재 날짜로 교체
+        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0500'); // 현재 시간 기준 직전 발표 시간으로 교체
         queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent('60');
         queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent('127');
         xhr.open('GET', url + queryParams);
@@ -111,7 +73,8 @@
                     temperature: null,
                     skyCondition: null,
                     precipitationType: null,
-                    rainfall1h: null
+                    rainfall1h: null,
+                    mintemperature: null
                 };
 
                 for (var i = 0; i < items.length; i++) {
@@ -128,223 +91,224 @@
                         case 'SKY': // 하늘 상태
                             weatherData.skyCondition = value; // 1: 맑음, 3: 구름 많음, 4: 흐림
                             break;
-                        case 'RN1': // 1시간 강수량
-                            weatherData.rainfall1h = value + 'mm';
+                        case 'UUU': // 1시간 강수량
+                            weatherData.rainfall1h = value;
                             break;
+                        case 'VEC': // 최저기온
+                            weatherData.mintemperature = value;
                     }
                 }
+                //
+                // // 여기서 날씨 상태에 따른 아이콘을 선택할 수 있습니다.
+                // // 예시로는 console.log로 출력하고 있으나, 실제로는 아이콘 이미지를 동적으로 변경할 수 있습니다.
+                // document.getElementById("temperature").textContent += weatherData.temperature;
+                // document.getElementById("skyCondition").textContent += weatherData.skyCondition;
+                // document.getElementById("precipitationType").textContent += weatherData.precipitationType;
+                // document.getElementById("rainfall1h").textContent += weatherData.rainfall1h;
+                // document.getElementById("mintemperature").textContent += weatherData.mintemperature;
 
-                // 여기서 날씨 상태에 따른 아이콘을 선택할 수 있습니다.
-                // 예시로는 console.log로 출력하고 있으나, 실제로는 아이콘 이미지를 동적으로 변경할 수 있습니다.
-                console.log("현재 기온: " + weatherData.temperature);
-                console.log("하늘 상태: " + weatherData.skyCondition);
-                console.log("강수 형태: " + weatherData.precipitationType);
-                console.log("1시간 강수량: " + weatherData.rainfall1h);
-
-                // 예를 들어, 하늘 상태(SKY)에 따른 아이콘 로직을 구현할 수 있습니다.
-                // 이 부분은 실제 이미지 경로나 아이콘 클래스에 따라 다를 수 있습니다.
-                var skyIcon = '';
+                // 하늘 상태에 따른 아이콘 이미지 변경
+                var skyIconSrc = '';
                 switch(weatherData.skyCondition) {
-                    case '1': skyIcon = '맑음 아이콘 경로 또는 클래스'; break;
-                    case '3': skyIcon = '구름 많음 아이콘 경로 또는 클래스'; break;
-                    case '4': skyIcon = '흐림 아이콘 경로 또는 클래스'; break;
+                    case '1': skyIconSrc = '맑음 아이콘 이미지 경로'; break;
+                    case '3': skyIconSrc = '구름 많음 아이콘 이미지 경로'; break;
+                    case '4': skyIconSrc = '흐림 아이콘 이미지 경로'; break;
                 }
-                console.log("하늘 상태 아이콘: " + skyIcon);
+                document.getElementById("weatherIcon").src = skyIconSrc;
             }
         };
-
         xhr.send('');
 
     }
 </script>
-<script>
+<!--<script>-->
 
-    $(document).ready(function() {
-        var mixedChartInstance = null;
+<!--    $(document).ready(function() {-->
+<!--        var mixedChartInstance = null;-->
 
-        function getGenderAgeDistribution(gender) {
-            return $.ajax({url: `/people/age-distribution?gender=${gender}`, type: 'GET'});
-        }
+<!--        function getGenderAgeDistribution(gender) {-->
+<!--            return $.ajax({url: `/people/age-distribution?gender=${gender}`, type: 'GET'});-->
+<!--        }-->
 
-        function updateCharts(gender) {
-            const genderLabel = gender === 'Female' ? '여성' : '남성';
-            // 여기서 $.when을 사용하여 두 Promise가 모두 완료될 때까지 기다립니다.
-            $.when(
-                $.ajax({url: '/age-distribution', type: 'GET'}),
-                getGenderAgeDistribution(gender)
-            ).done(function (ageDistributionResponse, genderAgeDistributionResponse) {
-                // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는
-                // [data, textStatus, jqXHR] 형식의 배열입니다.
-                initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);
-            }).fail(function (error) {
-                console.log("Error loading data:", error);
-            });
-        }
+<!--        function updateCharts(gender) {-->
+<!--            const genderLabel = gender === 'Female' ? '여성' : '남성';-->
+<!--            // 여기서 $.when을 사용하여 두 Promise가 모두 완료될 때까지 기다립니다.-->
+<!--            $.when(-->
+<!--                $.ajax({url: '/age-distribution', type: 'GET'}),-->
+<!--                getGenderAgeDistribution(gender)-->
+<!--            ).done(function (ageDistributionResponse, genderAgeDistributionResponse) {-->
+<!--                // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는-->
+<!--                // [data, textStatus, jqXHR] 형식의 배열입니다.-->
+<!--                initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);-->
+<!--            }).fail(function (error) {-->
+<!--                console.log("Error loading data:", error);-->
+<!--            });-->
+<!--        }-->
 
-        // 라디오 버튼 이벤트 핸들러
-        $('#btnradio1').click(function () {
-            updateCharts('Female');
-        });
+<!--        // 라디오 버튼 이벤트 핸들러-->
+<!--        $('#btnradio1').click(function () {-->
+<!--            updateCharts('Female');-->
+<!--        });-->
 
-        $('#btnradio2').click(function () {
-            updateCharts('Male');
-        });
+<!--        $('#btnradio2').click(function () {-->
+<!--            updateCharts('Male');-->
+<!--        });-->
 
-        // 초기 차트 로딩
-        updateCharts('Female');
+<!--        // 초기 차트 로딩-->
+<!--        updateCharts('Female');-->
 
-        function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {
-            const chartData = {
-                labels: Object.keys(ageDistribution),
-                datasets: [{
-                    label: '연령대별 분포',
-                    data: Object.values(ageDistribution),
-                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                    borderColor: 'rgba(255, 206, 86, 1)',
-                }, {
-                    label: `성별 분포 (${genderLabel})`,
-                    data: Object.values(genderAgeDistribution),
-                    type: 'line',
-                    borderColor: genderLabel === '여성' ? 'rgb(255, 99, 132)' : 'rgb(54, 162, 235)',
-                    fill: false,
-                }]
-            };
+<!--        function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {-->
+<!--            const chartData = {-->
+<!--                labels: Object.keys(ageDistribution),-->
+<!--                datasets: [{-->
+<!--                    label: '연령대별 분포',-->
+<!--                    data: Object.values(ageDistribution),-->
+<!--                    backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                    borderColor: 'rgba(255, 206, 86, 1)',-->
+<!--                }, {-->
+<!--                    label: `성별 분포 (${genderLabel})`,-->
+<!--                    data: Object.values(genderAgeDistribution),-->
+<!--                    type: 'line',-->
+<!--                    borderColor: genderLabel === '여성' ? 'rgb(255, 99, 132)' : 'rgb(54, 162, 235)',-->
+<!--                    fill: false,-->
+<!--                }]-->
+<!--            };-->
 
-            if (mixedChartInstance) {
-                mixedChartInstance.data = chartData;
-                mixedChartInstance.update();
-            } else {
-                const ctx = document.getElementById('mixedChart');
-                mixedChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: chartData,
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                            }
-                        }
-                    }
-                });
-            }
-        }
+<!--            if (mixedChartInstance) {-->
+<!--                mixedChartInstance.data = chartData;-->
+<!--                mixedChartInstance.update();-->
+<!--            } else {-->
+<!--                const ctx = document.getElementById('mixedChart');-->
+<!--                mixedChartInstance = new Chart(ctx, {-->
+<!--                    type: 'bar',-->
+<!--                    data: chartData,-->
+<!--                    options: {-->
+<!--                        scales: {-->
+<!--                            y: {-->
+<!--                                beginAtZero: true,-->
+<!--                            }-->
+<!--                        }-->
+<!--                    }-->
+<!--                });-->
+<!--            }-->
+<!--        }-->
 
-        initializeBarChart(); // 바 차트 초기화 호출 추가
-        function initializeBarChart() {
-            const barCtx = document.getElementById('barChart');
-            $.ajax({
-                url: '/age-distribution',
-                method: 'GET',
-                success: function (ageDistribution) {
-                    // AJAX request for female age distribution
-                    $.ajax({
-                        url: '/people/age-distribution',
-                        data: {gender: 'Female'},
-                        method: 'GET',
-                        success: function (femalesByAgeGroup) {
-                            $.ajax({
-                                url: '/people/age-distribution',
-                                data: {gender: 'Male'},
-                                method: 'GET',
-                                success: function (malesByAgeGroup) {
-                                    let barChart = new Chart(barCtx, {
-                                        type: 'bar',
-                                        data: {
-                                            labels: Object.keys(ageDistribution),
-                                            datasets: [{
-                                                label: '연령대별 분포',
-                                                data: Object.values(ageDistribution),
-                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                                                borderColor: 'rgba(255, 206, 86, 1)',
-                                                borderWidth: 1
-                                            }, {
-                                                label: '성별 분포 (여성)',
-                                                data: Object.values(femalesByAgeGroup),
-                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                                borderColor: 'rgba(255, 99, 132, 1)',
-                                                borderWidth: 1
-                                            }, {
-                                                label: '성별 분포 (남성)',
-                                                data: Object.values(malesByAgeGroup),
-                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                                borderColor: 'rgba(54, 162, 235, 1)',
-                                                borderWidth: 1
-                                            }]
-                                        },
-                                        options: {
-                                            scales: {
-                                                y: {
-                                                    beginAtZero: true
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        }
-        initializeStackedBarChart(); // 스택형 바 차트 초기화 함수 호출
-        function initializeStackedBarChart() {
-            // AJAX 요청으로 전체 연령 분포 데이터 가져오기
-            $.ajax({
-                url: '/age-distribution',
-                method: 'GET',
-                success: function (ageDistribution) {
-                    // AJAX 요청으로 여성의 연령별 분포 데이터 가져오기
-                    $.ajax({
-                        url: '/people/age-distribution',
-                        data: {gender: 'Female'},
-                        method: 'GET',
-                        success: function (femalesByAgeGroup) {
-                            // AJAX 요청으로 남성의 연령별 분포 데이터 가져오기
-                            $.ajax({
-                                url: '/people/age-distribution',
-                                data: {gender: 'Male'},
-                                method: 'GET',
-                                success: function (malesByAgeGroup) {
-                                    // 모든 데이터가 준비되면 차트 초기화
-                                    const stackedCtx = document.getElementById('stackedBarChart');
-                                    let stackedBarChart = new Chart(stackedCtx, {
-                                        type: 'bar',
-                                        data: {
-                                            labels: Object.keys(ageDistribution),
-                                            datasets: [{
-                                                label: '연령대별 분포',
-                                                data: Object.values(ageDistribution),
-                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                                            }, {
-                                                label: '성별 분포 (여성)',
-                                                data: Object.values(femalesByAgeGroup),
-                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                            }, {
-                                                label: '성별 분포 (남성)',
-                                                data: Object.values(malesByAgeGroup),
-                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                            }]
-                                        },
-                                        options: {
-                                            scales: {
-                                                x: {
-                                                    stacked: true,
-                                                },
-                                                y: {
-                                                    stacked: true,
-                                                    beginAtZero: true,
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        }})
-</script>
+<!--        initializeBarChart(); // 바 차트 초기화 호출 추가-->
+<!--        function initializeBarChart() {-->
+<!--            const barCtx = document.getElementById('barChart');-->
+<!--            $.ajax({-->
+<!--                url: '/age-distribution',-->
+<!--                method: 'GET',-->
+<!--                success: function (ageDistribution) {-->
+<!--                    // AJAX request for female age distribution-->
+<!--                    $.ajax({-->
+<!--                        url: '/people/age-distribution',-->
+<!--                        data: {gender: 'Female'},-->
+<!--                        method: 'GET',-->
+<!--                        success: function (femalesByAgeGroup) {-->
+<!--                            $.ajax({-->
+<!--                                url: '/people/age-distribution',-->
+<!--                                data: {gender: 'Male'},-->
+<!--                                method: 'GET',-->
+<!--                                success: function (malesByAgeGroup) {-->
+<!--                                    let barChart = new Chart(barCtx, {-->
+<!--                                        type: 'bar',-->
+<!--                                        data: {-->
+<!--                                            labels: Object.keys(ageDistribution),-->
+<!--                                            datasets: [{-->
+<!--                                                label: '연령대별 분포',-->
+<!--                                                data: Object.values(ageDistribution),-->
+<!--                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                                                borderColor: 'rgba(255, 206, 86, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (여성)',-->
+<!--                                                data: Object.values(femalesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',-->
+<!--                                                borderColor: 'rgba(255, 99, 132, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (남성)',-->
+<!--                                                data: Object.values(malesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',-->
+<!--                                                borderColor: 'rgba(54, 162, 235, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                        options: {-->
+<!--                                            scales: {-->
+<!--                                                y: {-->
+<!--                                                    beginAtZero: true-->
+<!--                                                }-->
+<!--                                            }-->
+<!--                                        }-->
+<!--                                    });-->
+<!--                                }-->
+<!--                            });-->
+<!--                        }-->
+<!--                    });-->
+<!--                }-->
+<!--            });-->
+<!--        }-->
+<!--        initializeStackedBarChart(); // 스택형 바 차트 초기화 함수 호출-->
+<!--        function initializeStackedBarChart() {-->
+<!--            // AJAX 요청으로 전체 연령 분포 데이터 가져오기-->
+<!--            $.ajax({-->
+<!--                url: '/age-distribution',-->
+<!--                method: 'GET',-->
+<!--                success: function (ageDistribution) {-->
+<!--                    // AJAX 요청으로 여성의 연령별 분포 데이터 가져오기-->
+<!--                    $.ajax({-->
+<!--                        url: '/people/age-distribution',-->
+<!--                        data: {gender: 'Female'},-->
+<!--                        method: 'GET',-->
+<!--                        success: function (femalesByAgeGroup) {-->
+<!--                            // AJAX 요청으로 남성의 연령별 분포 데이터 가져오기-->
+<!--                            $.ajax({-->
+<!--                                url: '/people/age-distribution',-->
+<!--                                data: {gender: 'Male'},-->
+<!--                                method: 'GET',-->
+<!--                                success: function (malesByAgeGroup) {-->
+<!--                                    // 모든 데이터가 준비되면 차트 초기화-->
+<!--                                    const stackedCtx = document.getElementById('stackedBarChart');-->
+<!--                                    let stackedBarChart = new Chart(stackedCtx, {-->
+<!--                                        type: 'bar',-->
+<!--                                        data: {-->
+<!--                                            labels: Object.keys(ageDistribution),-->
+<!--                                            datasets: [{-->
+<!--                                                label: '연령대별 분포',-->
+<!--                                                data: Object.values(ageDistribution),-->
+<!--                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (여성)',-->
+<!--                                                data: Object.values(femalesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (남성)',-->
+<!--                                                data: Object.values(malesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                        options: {-->
+<!--                                            scales: {-->
+<!--                                                x: {-->
+<!--                                                    stacked: true,-->
+<!--                                                },-->
+<!--                                                y: {-->
+<!--                                                    stacked: true,-->
+<!--                                                    beginAtZero: true,-->
+<!--                                                }-->
+<!--                                            }-->
+<!--                                        }-->
+<!--                                    });-->
+<!--                                }-->
+<!--                            });-->
+<!--                        }-->
+<!--                    });-->
+<!--                }-->
+<!--            });-->
+<!--        }})-->
+<!--</script>-->
 
 </body>
 </html>
