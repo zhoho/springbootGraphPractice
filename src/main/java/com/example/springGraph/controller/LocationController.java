@@ -1,18 +1,25 @@
 package com.example.springGraph.controller;
-import com.example.springGraph.service.ExcelService;
+
+import com.example.springGraph.entity.Location;
+import com.example.springGraph.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
 
 @Controller
 public class LocationController {
 
+    private final LocationService locationService;
+
     @Autowired
-    private ExcelService excelService;
+    public LocationController(LocationService locationService) {
+        this.locationService = locationService;
+    }
 
     @GetMapping("/")
     public String index() {
@@ -20,20 +27,20 @@ public class LocationController {
     }
 
     @PostMapping("/getCoordinates")
-    public String getCoordinates(@RequestParam("file") MultipartFile file,
-                                 @RequestParam("level1") String level1,
-                                 @RequestParam(value = "level2", required = false) String level2,
-                                 @RequestParam(value = "level3", required = false) String level3,
+    public String getCoordinates(@RequestParam("city") String city,
+                                 @RequestParam("district") String district,
+                                 @RequestParam("subdistrict") String subdistrict,
                                  Model model) {
-        ExcelService.GridCoordinates coordinates = excelService.getGridCoordinates(file, level1, level2, level3);
+        Optional<Location> locationOptional = locationService.findLocationByCityDistrictSubdistrict(city, district, subdistrict);
 
-        if (coordinates != null) {
-            model.addAttribute("gridX", coordinates.getX());
-            model.addAttribute("gridY", coordinates.getY());
+        if (locationOptional.isPresent()) {
+            Location location = locationOptional.get();
+            model.addAttribute("gridX", location.getX());
+            model.addAttribute("gridY", location.getY());
         } else {
             model.addAttribute("message", "No matching data found.");
         }
 
-        return "index"; // 타임리프 템플릿으로 다시 보냄
+        return "index";
     }
 }

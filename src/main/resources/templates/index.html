@@ -15,20 +15,18 @@
 <body>
 <h1>Location Grid Finder</h1>
 <form method="POST" action="/getCoordinates" enctype="multipart/form-data">
-    <label for="file">Upload Excel File:</label>
-    <input type="file" id="file" name="file" required>
+    <label for="city">1단계:</label>
+    <input type="text" id="city" name="city" required>
 
-    <label for="level1">1단계:</label>
-    <input type="text" id="level1" name="level1" required>
+    <label for="district">2단계:</label>
+    <input type="text" id="district" name="district">
 
-    <label for="level2">2단계:</label>
-    <input type="text" id="level2" name="level2">
-
-    <label for="level3">3단계:</label>
-    <input type="text" id="level3" name="level3">
+    <label for="subdistrict">3단계:</label>
+    <input type="text" id="subdistrict" name="subdistrict">
 
     <button type="submit">Get Coordinates</button>
 </form>
+
 
 <!-- 결과 출력 -->
 <div th:if="${gridX}">
