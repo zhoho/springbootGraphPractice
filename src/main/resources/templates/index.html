@@ -14,21 +14,6 @@
 
 <body>
 <h1>Location Grid Finder</h1>
-<!--<form method="POST" action="/getCoordinates">-->
-<!--    <label for="city">1단계:</label>-->
-<!--    <input type="text" id="city" name="city" required>-->
-
-<!--    <label for="district">2단계:</label>-->
-<!--    <input type="text" id="district" name="district">-->
-
-<!--    <label for="subdistrict">3단계:</label>-->
-<!--    <input type="text" id="subdistrict" name="subdistrict">-->
-
-<!--    <input type="hidden" id="gridX" name="gridX" th:value="${gridX}">-->
-<!--    <input type="hidden" id="gridY" name="gridY" th:value="${gridY}">-->
-<!--    <button type="submit">Get Coordinates</button>-->
-<!--</form>-->
-
 <form id="getCoordinatesForm" method="POST" action="/getCoordinates" enctype="multipart/form-data">
     <label for="city">1단계:</label>
     <input type="text" id="city" name="city" required list="cityResults">
@@ -42,6 +27,10 @@
         <input type="hidden" id="gridY" name="gridY" th:value="${gridY}">
     <button type="submit">Get Coordinates</button>
 </form>
+
+<datalist id="cityResults"></datalist>
+<datalist id="districtResults"></datalist>
+<datalist id="subdistrictResults"></datalist>
 
 <!-- 결과 출력 -->
 <div th:if="${gridX}">
@@ -57,21 +46,6 @@
 
 <div class="container">
     <div class="container">
-        <!--        <label for="latitude">위도:</label>-->
-        <!--        <input type="text" id="latitude" name="latitude">-->
-        <!--        <label for="longitude">경도:</label>-->
-        <!--        <input type="text" id="longitude" name="longitude">-->
-        <!--        <button id="getWeather">날씨 확인 (위도 경도)</button>-->
-        <!--        <button onclick="getWeather()">Get Weather</button>-->
-        <!--        <div id="weatherInfo">-->
-        <!--            <h2>현재 날씨 상태</h2>-->
-        <!--            <p id="temperature">기온: </p>-->
-        <!--            <p id="skyCondition">하늘 상태: </p>-->
-        <!--            <p id="precipitationType">강수 형태: </p>-->
-        <!--            <p id="rainfall1h">동서 바람 : </p>-->
-        <!--            <p id="mintemperature">풍향: </p>-->
-        <!--            <img id="weatherIcon" src="" alt="날씨 아이콘" style="width:100px; height:100px;">-->
-        <!--        </div>-->
         <div id="weather-text"></div>
         <div id="location"></div>
         <h1 class="mt-5">연령별 및 성별 그래프</h1>
