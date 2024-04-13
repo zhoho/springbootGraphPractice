@@ -8,7 +8,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -43,4 +46,19 @@ public class LocationController {
 
         return "index";
     }
+    @GetMapping("/searchAddress")
+    @ResponseBody
+    public List<String> searchAddress(@RequestParam("type") String type, @RequestParam("searchTerm") String searchTerm) {
+        switch (type) {
+            case "city":
+                return locationService.findCities(searchTerm);
+            case "district":
+                return locationService.findDistricts(searchTerm);
+            case "subdistrict":
+                return locationService.findSubdistricts(searchTerm);
+            default:
+                return new ArrayList<>();
+        }
+    }
+
 }

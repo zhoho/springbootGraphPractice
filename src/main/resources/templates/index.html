@@ -14,18 +14,38 @@
 
 <body>
 <h1>Location Grid Finder</h1>
-<form method="POST" action="/getCoordinates" enctype="multipart/form-data">
+<!--<form method="POST" action="/getCoordinates">-->
+<!--    <label for="city">1단계:</label>-->
+<!--    <input type="text" id="city" name="city" required>-->
+
+<!--    <label for="district">2단계:</label>-->
+<!--    <input type="text" id="district" name="district">-->
+
+<!--    <label for="subdistrict">3단계:</label>-->
+<!--    <input type="text" id="subdistrict" name="subdistrict">-->
+
+<!--    <input type="hidden" id="gridX" name="gridX" th:value="${gridX}">-->
+<!--    <input type="hidden" id="gridY" name="gridY" th:value="${gridY}">-->
+<!--    <button type="submit">Get Coordinates</button>-->
+<!--</form>-->
+
+<form id="getCoordinatesForm" method="POST" action="/getCoordinates" enctype="multipart/form-data">
     <label for="city">1단계:</label>
-    <input type="text" id="city" name="city" required>
+    <input type="text" id="city" name="city" required list="cityResults">
 
     <label for="district">2단계:</label>
-    <input type="text" id="district" name="district">
+    <input type="text" id="district" name="district" list="districtResults">
 
     <label for="subdistrict">3단계:</label>
-    <input type="text" id="subdistrict" name="subdistrict">
-
+    <input type="text" id="subdistrict" name="subdistrict" list="subdistrictResults">
+        <input type="hidden" id="gridX" name="gridX" th:value="${gridX}">
+        <input type="hidden" id="gridY" name="gridY" th:value="${gridY}">
     <button type="submit">Get Coordinates</button>
 </form>
+
+<datalist id="cityResults"></datalist>
+<datalist id="districtResults"></datalist>
+<datalist id="subdistrictResults"></datalist>
 
 
 <!-- 결과 출력 -->
@@ -39,21 +59,21 @@
 
 <div class="container">
     <div class="container">
-        <label for="latitude">위도:</label>
-        <input type="text" id="latitude" name="latitude">
-        <label for="longitude">경도:</label>
-        <input type="text" id="longitude" name="longitude">
-        <button id="getWeather">날씨 확인 (위도 경도)</button>
-        <button onclick="getWeather()">Get Weather</button>
-        <div id="weatherInfo">
-            <h2>현재 날씨 상태</h2>
-            <p id="temperature">기온: </p>
-            <p id="skyCondition">하늘 상태: </p>
-            <p id="precipitationType">강수 형태: </p>
-            <p id="rainfall1h">동서 바람 : </p>
-            <p id="mintemperature">풍향: </p>
-            <img id="weatherIcon" src="" alt="날씨 아이콘" style="width:100px; height:100px;">
-        </div>
+        <!--        <label for="latitude">위도:</label>-->
+        <!--        <input type="text" id="latitude" name="latitude">-->
+        <!--        <label for="longitude">경도:</label>-->
+        <!--        <input type="text" id="longitude" name="longitude">-->
+        <!--        <button id="getWeather">날씨 확인 (위도 경도)</button>-->
+        <!--        <button onclick="getWeather()">Get Weather</button>-->
+        <!--        <div id="weatherInfo">-->
+        <!--            <h2>현재 날씨 상태</h2>-->
+        <!--            <p id="temperature">기온: </p>-->
+        <!--            <p id="skyCondition">하늘 상태: </p>-->
+        <!--            <p id="precipitationType">강수 형태: </p>-->
+        <!--            <p id="rainfall1h">동서 바람 : </p>-->
+        <!--            <p id="mintemperature">풍향: </p>-->
+        <!--            <img id="weatherIcon" src="" alt="날씨 아이콘" style="width:100px; height:100px;">-->
+        <!--        </div>-->
         <div id="weather-text"></div>
         <div id="location"></div>
         <div id="weather-data"></div>
@@ -76,76 +96,114 @@
     </div>
 </div>
 <script>
-    function getWeather() {
+
+    function getWeather(gridX, gridY) {
+        console.log("Fetching weather for coordinates:", gridX, gridY); // Debugging log
         var xhr = new XMLHttpRequest();
-        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst'; // HTTPS 사용(지원하는 경우)
-        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D'; // 실제 서비스 키로 교체
+        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
         queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
         queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');
         queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
-        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240407'); // 현재 날짜로 교체
-        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0500'); // 현재 시간 기준 직전 발표 시간으로 교체
-        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent('60');
-        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent('127');
+        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240413');
+        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0500');
+        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);
+        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);
         xhr.open('GET', url + queryParams);
-
         xhr.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                var parser = new DOMParser();
-                var xmlDoc = parser.parseFromString(this.responseText, "application/xml");
-                var items = xmlDoc.getElementsByTagName('item');
-                var weatherData = {
-                    temperature: null,
-                    skyCondition: null,
-                    precipitationType: null,
-                    rainfall1h: null,
-                    mintemperature: null
-                };
-
-                for (var i = 0; i < items.length; i++) {
-                    var category = items[i].getElementsByTagName('category')[0].childNodes[0].nodeValue;
-                    var value = items[i].getElementsByTagName('obsrValue')[0].childNodes[0].nodeValue;
-
-                    switch (category) {
-                        case 'T1H': // 기온
-                            weatherData.temperature = value + '°C';
-                            break;
-                        case 'PTY': // 강수 형태
-                            weatherData.precipitationType = value; // 0: 없음, 1: 비, 2: 비/눈, 3: 눈, 4: 소나기
-                            break;
-                        case 'SKY': // 하늘 상태
-                            weatherData.skyCondition = value; // 1: 맑음, 3: 구름 많음, 4: 흐림
-                            break;
-                        case 'UUU': // 1시간 강수량
-                            weatherData.rainfall1h = value;
-                            break;
-                        case 'VEC': // 최저기온
-                            weatherData.mintemperature = value;
-                    }
-                }
-                //
-                // // 여기서 날씨 상태에 따른 아이콘을 선택할 수 있습니다.
-                // // 예시로는 console.log로 출력하고 있으나, 실제로는 아이콘 이미지를 동적으로 변경할 수 있습니다.
-                // document.getElementById("temperature").textContent += weatherData.temperature;
-                // document.getElementById("skyCondition").textContent += weatherData.skyCondition;
-                // document.getElementById("precipitationType").textContent += weatherData.precipitationType;
-                // document.getElementById("rainfall1h").textContent += weatherData.rainfall1h;
-                // document.getElementById("mintemperature").textContent += weatherData.mintemperature;
-
-                // 하늘 상태에 따른 아이콘 이미지 변경
-                var skyIconSrc = '';
-                switch(weatherData.skyCondition) {
-                    case '1': skyIconSrc = '맑음 아이콘 이미지 경로'; break;
-                    case '3': skyIconSrc = '구름 많음 아이콘 이미지 경로'; break;
-                    case '4': skyIconSrc = '흐림 아이콘 이미지 경로'; break;
-                }
-                document.getElementById("weatherIcon").src = skyIconSrc;
+            if (this.readyState === 4 && this.status === 200) {
+                // 날씨 데이터 처리
+                console.log(this.responseText);
             }
         };
-        xhr.send('');
-
+        xhr.send();
     }
+
+    $(document).ready(function() {
+        setupAutocomplete('#city', 'city', 'cityResults');
+        setupAutocomplete('#district', 'district', 'districtResults');
+        setupAutocomplete('#subdistrict', 'subdistrict', 'subdistrictResults');
+
+        function setupAutocomplete(selector, type, resultListId) {
+            $(selector).on('input', function() {
+                var input = $(this).val();
+                if (input.length > 1) {
+                    $.ajax({
+                        url: '/searchAddress',
+                        method: 'GET',
+                        data: { type: type, searchTerm: input },
+                        success: function(data) {
+                            var autocompleteResults = $('#' + resultListId);
+                            autocompleteResults.empty();
+                            data.forEach(function(item) {
+                                autocompleteResults.append($('<option>').val(item));
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var gridX = document.getElementById('gridX').value;
+        var gridY = document.getElementById('gridY').value;
+        if (gridX && gridY) {
+            getWeather(gridX, gridY);
+        }
+    });
+
 </script>
+
+
+<!--<script>-->
+<!--    function submitCoordinates() {-->
+<!--        var city = document.getElementById('city').value;-->
+<!--        var district = document.getElementById('district').value;-->
+<!--        var subdistrict = document.getElementById('subdistrict').value;-->
+
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        xhr.open("POST", "/getCoordinates", true);-->
+<!--        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");-->
+<!--        xhr.onreadystatechange = function() {-->
+<!--            if (this.readyState === 4 && this.status === 200) {-->
+<!--                // 서버로부터 응답받은 JSON 데이터 파싱-->
+<!--                var response = JSON.parse(this.responseText);-->
+<!--                if(response.gridX && response.gridY) {-->
+<!--                    getWeather(response.gridX, response.gridY);-->
+<!--                }-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send("city=" + encodeURIComponent(city) + "&district=" + encodeURIComponent(district) + "&subdistrict=" + encodeURIComponent(subdistrict));-->
+<!--    }-->
+
+<!--    function getWeather(gridX, gridY) {-->
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';-->
+<!--        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + '실제서비스키';-->
+<!--        queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');-->
+<!--        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');-->
+<!--        queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');-->
+<!--        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240407');-->
+<!--        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0500');-->
+<!--        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);-->
+<!--        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);-->
+<!--        xhr.open('GET', url + queryParams);-->
+<!--        xhr.onreadystatechange = function () {-->
+<!--            if (this.readyState === 4 && this.status === 200) {-->
+<!--                // 날씨 데이터 처리-->
+<!--                console.log(this.responseText);-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send();-->
+<!--    }-->
+
+<!--    document.getElementById("getCoordinatesForm").addEventListener("submit", function(event){-->
+<!--        event.preventDefault();-->
+<!--        submitCoordinates();-->
+<!--    });-->
+<!--</script>-->
+
 <!--<script>-->
 
 <!--    $(document).ready(function() {-->
@@ -326,14 +384,14 @@
 <!--                                            }-->
 <!--                                        }-->
 <!--                                    });-->
-<!--                                }-->
-<!--                            });-->
-<!--                        }-->
-<!--                    });-->
-<!--                }-->
-<!--            });-->
-<!--        }})-->
-<!--</script>-->
+<!—                                }—>
+<!—                            });—>
+<!—                        }—>
+<!—                    });—>
+<!—                }—>
+<!—            });—>
+<!—        }})—>
+<!—</script>—>
 
 </body>
 </html>
