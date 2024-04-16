@@ -76,6 +76,9 @@
         if(nextForecastHour.toString().padStart(2, '0') === '00' || nextForecastHour.toString().padStart(2, '0') === '01' || nextForecastHour.toString().padStart(2, '0') === '02') {
             return '2300'; // 예: '0210', '0510'
         }
+        if(Math.floor(now.getHours())% 3 === 2 && now.getMinutes() >= 11) {
+            return Math.floor(now.getHours()).toString().padStart(2, '0') + '00';
+        }
         console.log(nextForecastHour.toString().padStart(2, '0') + '10');
         return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
     }
