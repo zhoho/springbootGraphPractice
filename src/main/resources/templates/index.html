@@ -72,15 +72,14 @@
     function getNextForecastTime() {
         let now = new Date();
         let nextForecastHour = Math.floor(now.getHours() / 3) * 3 - 1;
-        // if (nextForecastHour >= 12) nextForecastHour -= 12; // 자정 넘어가는 시간 조정
         if(nextForecastHour.toString().padStart(2, '0') === '00' || nextForecastHour.toString().padStart(2, '0') === '01' || nextForecastHour.toString().padStart(2, '0') === '02') {
-            return '2300'; // 예: '0210', '0510'
+            return '2300';
         }
         if(Math.floor(now.getHours())% 3 === 2 && now.getMinutes() >= 11) {
             return Math.floor(now.getHours()).toString().padStart(2, '0') + '00';
         }
         console.log(nextForecastHour.toString().padStart(2, '0') + '10');
-        return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
+        return nextForecastHour.toString().padStart(2, '0') + '00';
     }
 
 
@@ -108,9 +107,7 @@
         xhr.open('GET', url + queryParams);
         xhr.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
-                // 날씨 데이터 처리
                 displayWeatherData(this.responseXML);
-                // console.log(this.responseText);
             }
         };
         xhr.send();
@@ -122,16 +119,27 @@
         const items = xml.getElementsByTagName("item");
         let weatherData = {};
 
+        // 현재 시간을 기준으로 데이터 필터링
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        // 현재 시간이 10분 이상일 경우 현재 시간의 정시를 사용, 그렇지 않을 경우 이전 시간의 정시를 사용
+        const referenceTime = currentMinute >= 10 ? currentHour : currentHour - 1;
+        const referenceTimeString = referenceTime.toString().padStart(2, '0') + '00';
+
         // 데이터 구조화
         for (let i = 0; i < items.length; i++) {
             const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
             const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
             const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue;
 
-            if (!weatherData[time]) {
-                weatherData[time] = {};
+            // 현재 참조 시간에 해당하는 데이터만 저장
+            if (time === referenceTimeString) {
+                if (!weatherData[time]) {
+                    weatherData[time] = {};
+                }
+                weatherData[time][category] = value;
             }
-            weatherData[time][category] = value;
         }
 
         // 테이블 생성
@@ -141,19 +149,20 @@
         for (const [time, data] of Object.entries(weatherData)) {
             const weatherIcon = getWeatherIcon(parseInt(data['SKY']), parseInt(data['PTY']));
             output += `<tr>
-                <td>${time}</td>
-                <td>${data['TMP'] || '--'}</td>
-                <td>${data['WSD'] || '--'}</td>
-                <td>${data['REH'] || '--'}</td>
-                <td>${data['PCP'] || '--'}</td>
-                <td>${data['SKY'] || '--'}</td>
-                <td>${weatherIcon || '--'}</td>
-              </tr>`;
+            <td>${time}</td>
+            <td>${data['TMP'] || '--'}</td>
+            <td>${data['WSD'] || '--'}</td>
+            <td>${data['REH'] || '--'}</td>
+            <td>${data['PCP'] || '--'}</td>
+            <td>${data['SKY'] || '--'}</td>
+            <td>${weatherIcon || '--'}</td>
+          </tr>`;
         }
 
         output += "</tbody></table>";
         document.getElementById("weather-data").innerHTML = output;
     }
+
 
 
     $(document).ready(function() {
