@@ -68,10 +68,14 @@
 </div>
 <script>
 
+
     function getNextForecastTime() {
         let now = new Date();
-        let nextForecastHour = Math.floor(now.getHours() / 3) * 3 + 2; // 다음 3시간 간격 시간 계산
+        let nextForecastHour = Math.floor(now.getHours() / 3) * 3 - 1;
         // if (nextForecastHour >= 12) nextForecastHour -= 12; // 자정 넘어가는 시간 조정
+        if(nextForecastHour.toString().padStart(2, '0') === '00' || nextForecastHour.toString().padStart(2, '0') === '01' || nextForecastHour.toString().padStart(2, '0') === '02') {
+            return '2300'; // 예: '0210', '0510'
+        }
         console.log(nextForecastHour.toString().padStart(2, '0') + '10');
         return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
     }
@@ -79,8 +83,6 @@
 
     let today = new Date();
     let hours = today.getHours();
-
-    console.log(hours + "시");
 
     function getWeather(gridX, gridY) {
         console.log("Fetching weather for coordinates:", gridX, gridY); // Debugging log
@@ -96,6 +98,8 @@
         queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
         queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent(currentDate);
         queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent(forecastTime);
+
+
         queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);
         queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);
         xhr.open('GET', url + queryParams);
@@ -129,22 +133,19 @@
 
         // 테이블 생성
         let output = "<h3>Weather Forecast</h3>";
-        output += "<table class='table table-striped table-hover'><thead class='table-dark'><tr><th>Time</th><th>Temperature (°C)</th><th>Wind Speed (m/s)</th><th>Humidity (%)</th><th>Precipitation</th><th>Sky Condition</th></tr></thead><tbody>";
+        output += "<table class='table table-striped table-hover'><thead class='table-dark'><tr><th>Time</th><th>Temperature (°C)</th><th>Wind Speed (m/s)</th><th>Humidity (%)</th><th>Precipitation</th><th>Sky Condition</th><th>Weather Icon</th></tr></thead><tbody>";
 
         for (const [time, data] of Object.entries(weatherData)) {
+            const weatherIcon = getWeatherIcon(parseInt(data['SKY']), parseInt(data['PTY']));
             output += `<tr>
-                    <td>${time}</td>
-<!--                    // 1시간 기온-->
-                    <td>${data['TMP'] || '--'}</td>
-<!--                    // 풍속-->
-                    <td>${data['WSD'] || '--'}</td>
-<!--                    // 습도-->
-                    <td>${data['REH'] || '--'}</td>
-<!--                     // 1시간 강수량-->
-                    <td>${data['PCP'] || '--'}</td>
-<!--                    // 하늘 상태-->
-                    <td>${data['SKY'] || '--'}</td>
-                  </tr>`;
+                <td>${time}</td>
+                <td>${data['TMP'] || '--'}</td>
+                <td>${data['WSD'] || '--'}</td>
+                <td>${data['REH'] || '--'}</td>
+                <td>${data['PCP'] || '--'}</td>
+                <td>${data['SKY'] || '--'}</td>
+                <td>${weatherIcon || '--'}</td>
+              </tr>`;
         }
 
         output += "</tbody></table>";
@@ -188,7 +189,55 @@
 
 </script>
 
+<script>
+    function getWeatherIcon(sky, precipitation) {
+        const icons = {
+            clear: '☀️', // 맑음 아이콘
+            cloudy: '🌥', // 구름많음 아이콘
+            overcast: '☁️', // 흐림 아이콘
+            rain: '🌧', // 비 아이콘
+            sleet: '🌨', // 비/눈 아이콘
+            snow: '❄️', // 눈 아이콘
+            shower: '⛈' // 소나기 아이콘
+        };
 
+        // 하늘 상태를 기반으로 아이콘 설정
+        let icon = '';
+        switch(sky) {
+            case 1: // 맑음
+                icon = icons.clear;
+                break;
+            case 3: // 구름많음
+                icon = icons.cloudy;
+                break;
+            case 4: // 흐림
+                icon = icons.overcast;
+                break;
+            default:
+                icon = '';
+        }
+
+        // 강수 형태에 따라 아이콘을 추가
+        switch(precipitation) {
+            case 1: // 비
+                icon = icons.rain;
+                break;
+            case 2: // 비/눈
+                icon = icons.sleet;
+                break;
+            case 3: // 눈
+                icon = icons.snow;
+                break;
+            case 4: // 소나기
+                icon = icons.shower;
+                break;
+            default:
+        }
+
+        return icon;
+    }
+
+</script>
 
 <!--<script>-->
 <!--    function getNextForecastTime() {-->
