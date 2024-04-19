@@ -1,0 +1,15 @@
+#clock {
+    padding: 30px;
+    border-radius: 15px;
+    background-color: black;
+    font-size: 40px;
+    letter-spacing: 8px;
+    width: 400px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: 'Courier New', monospace;
+    margin: 0;
+}
