@@ -43,3 +43,37 @@ th, td {
 h3 {
     margin-bottom: 20px;
 }
+
+.step-container {
+    text-align: center;
+}
+
+.list-inline {
+    padding: 0;
+    list-style: none;
+}
+
+.list-inline-item {
+    display: inline-block;
+    margin-right: 5px; /* 간격 조정 */
+}
+
+.list-inline-item button {
+    padding: 10px 15px; /* 버튼 패딩 */
+    margin-bottom: 10px; /* 줄 간격 */
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.list-inline-item button:hover {
+    background-color: #e2e6ea;
+}
+
+/* 한 줄에 5개의 버튼만 표시되도록 너비를 설정 */
+@media (min-width: 768px) {
+    .list-inline-item {
+        width: calc(20% - 5px);
+    }
+}
