@@ -13,9 +13,8 @@ public class StepLocationService {
     @Autowired
     private StepLocationRepository locationRepository;
 
-    public List<String> getDistinctStep1() {
-        // 데이터베이스에서 1단계 데이터 조회
-        return locationRepository.findDistinctStep1();
+    public List<String> getCities() {
+        return locationRepository.findDistinctCities();
     }
 
     public List<String> getDistrictsByCity(String city) {

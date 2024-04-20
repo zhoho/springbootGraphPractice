@@ -21,10 +21,10 @@ public class StepLocationController {
     @Autowired
     private StepLocationService locationService;
 
-    @GetMapping("/api/step1")
-    public ResponseEntity<List<String>> getStep1() {
-        List<String> city = locationService.getDistinctStep1();
-        return ResponseEntity.ok(city);
+    @GetMapping("/api/cities")
+    public ResponseEntity<List<String>> getCities() {
+        List<String> cities = locationService.getCities();
+        return cities != null && !cities.isEmpty() ? ResponseEntity.ok(cities) : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/api/districts/{city}")

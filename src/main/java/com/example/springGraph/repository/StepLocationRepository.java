@@ -10,8 +10,9 @@ import java.util.Optional;
 
 public interface StepLocationRepository extends JpaRepository<Location, Long> {
 
+
     @Query("SELECT DISTINCT l.city FROM Location l")
-    List<String> findDistinctStep1();
+    List<String> findDistinctCities();
 
     @Query("SELECT DISTINCT l.district FROM Location l WHERE l.city = :city")
     List<String> findDistrictsByCity(@Param("city") String city);
