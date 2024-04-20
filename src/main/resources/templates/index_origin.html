@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Graph Practice</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+  <link th:href="@{/css/style.css}" rel="stylesheet" />
+  <script th:src="@{/js/getweather.js}"></script>
+</head>
+
+<body>
+
+<!-- 단계별 리스트 컨테이너, 초기에는 step1만 표시 -->
+<div id="step1-container" class="step-container">
+  <ul id="step1-list" class="list-inline">
+    <li class="list-inline-item"><button onclick="onStep1Clicked('서울특별시')">서울특별시</button></li>
+    <li class="list-inline-item"><button onclick="onStep1Clicked('대전광역시')">대전광역시</button></li>
+
+    <!-- 나머지 step1 아이템들도 같은 방식으로 추가 -->
+  </ul>
+</div>
+
+<div id="step2-container" class="step-container" style="display:none;">
+  <button onclick="goBackToStep1()"><</button>
+  <ul id="step2-list" class="list-inline">
+  </ul>
+</div>
+
+<div id="step3-container" class="step-container" style="display:none;">
+  <button onclick="goBackToStep2()"><</button>
+  <ul id="step3-list" class="list-inline">
+  </ul>
+</div>
+
+<p id="coordinates-display"></p>
+
+
+
+
+<h1>Location Grid Finder</h1>
+
+<form id="getCoordinatesForm" method="POST" action="/getCoordinates" enctype="multipart/form-data">
+  <label for="city">1단계:</label>
+  <input type="text" id="city" name="city" required list="cityResults">
+
+  <label for="district">2단계:</label>
+  <input type="text" id="district" name="district" list="districtResults">
+
+  <label for="subdistrict">3단계:</label>
+  <input type="text" id="subdistrict" name="subdistrict" list="subdistrictResults">
+  <input type="hidden" id="gridX" name="gridX" th:value="${gridX}">
+  <input type="hidden" id="gridY" name="gridY" th:value="${gridY}">
+  <button type="submit">Get Coordinates</button>
+</form>
+
+<datalist id="cityResults"></datalist>
+<datalist id="districtResults"></datalist>
+<datalist id="subdistrictResults"></datalist>
+
+<!-- 결과 출력 -->
+<div th:if="${gridX}">
+  <p>Grid X: <span th:text="${gridX}"></span></p>
+  <p>Grid Y: <span th:text="${gridY}"></span></p>
+</div>
+<div th:if="${message}">
+  <p th:text="${message}"></p>
+</div>
+
+<div id="weather-data"></div>
+
+
+<!--<div class="container">-->
+<!--    <div class="container">-->
+<!--        <div id="weather-text"></div>-->
+<!--        <div id="location"></div>-->
+<!--        <h1 class="mt-5">연령별 및 성별 그래프</h1>-->
+<!--        <div class="btn-group mt-3">-->
+<!--            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>-->
+<!--            <label class="btn btn-outline-primary" for="btnradio1">여성</label>-->
+<!--            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">-->
+<!--            <label class="btn btn-outline-primary" for="btnradio2">남성</label>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--            <canvas id="mixedChart"></canvas>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--            <canvas id="barChart"></canvas>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--            <canvas id="stackedBarChart"></canvas>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<script> // 3선택
+
+function goBackToStep1() {
+  document.getElementById('step1-container').style.display = 'block';
+  document.getElementById('step2-container').style.display = 'none';
+  document.getElementById('step3-container').style.display = 'none';
+}
+
+function goBackToStep2() {
+  document.getElementById('step2-container').style.display = 'block';
+  document.getElementById('step3-container').style.display = 'none';
+}
+function onStep1Clicked(step1Value) {
+  fetch(`/api/step2/${step1Value}`)
+          .then(response => response.json())
+          .then(step2Data => {
+            // Set 객체를 사용하여 중복을 제거해주기
+            const uniqueStep2Data = [...new Set(step2Data)];
+
+            const step2List = document.getElementById('step2-list');
+            step2List.innerHTML = '';
+            uniqueStep2Data.forEach((item) => {
+              const listItem = document.createElement('li');
+              listItem.className = 'list-inline-item';
+              const button = document.createElement('button');
+              button.textContent = item;
+              button.onclick = function() { onStep2Clicked(item); };
+              listItem.appendChild(button);
+              step2List.appendChild(listItem);
+            });
+            document.getElementById('step2-container').style.display = 'block';
+            document.getElementById('step1-container').style.display = 'none';
+          })
+          .catch(error => console.error('Error fetching step2 data:', error));
+}
+
+
+function onStep2Clicked(step2Value) {
+  const cityValue = document.getElementById('city').value; // city의 현재 값을 저장
+  const districtValue = step2Value; // district의 현재 값을 저장
+
+  fetch(`/api/step3/${step2Value}`)
+          .then(response => response.json())
+          .then(step3Data => {
+            const step3Container = document.getElementById('step3-container');
+            const step3List = document.getElementById('step3-list');
+            step3List.innerHTML = '';
+            step3Data.forEach((item) => {
+              const listItem = document.createElement('li');
+              listItem.className = 'list-inline-item';
+              const button = document.createElement('button');
+              button.textContent = item;
+              // 여기에서 cityValue, districtValue, item을 onStep3Clicked로 전달합니다.
+              button.onclick = function() { onStep3Clicked(cityValue, districtValue, item); };
+              listItem.appendChild(button);
+              step3List.appendChild(listItem);
+            });
+            step3Container.style.display = 'block';
+            document.getElementById('step2-container').style.display = 'none';
+          })
+          .catch(error => console.error('Error fetching step3 data:', error));
+}
+
+function onStep3Clicked(city, district, subdistrict) {
+  fetch(`/api/coordinates?city=${encodeURIComponent(city)}&district=${encodeURIComponent(district)}&subdistrict=${encodeURIComponent(subdistrict)}`)
+          .then(response => response.json())
+          .then(location => {
+            if(location) {
+              console.log('Coordinates:', location);
+              // 좌표 정보를 DOM에 표시하거나 다른 처리를 할 수 있습니다.
+              // 예를 들어, 아래 코드를 사용하여 HTML 요소에 좌표를 표시할 수 있습니다.
+              document.getElementById('gridX').value = location.X;
+              document.getElementById('gridY').value = location.Y;
+            } else {
+              console.error('Location not found');
+            }
+          })
+          .catch(error => console.error('Error:', error));
+}
+
+
+</script>
+
+
+<script>
+  function getNextForecastTime() {
+    let now = new Date();
+    let nextForecastHour = Math.floor(now.getHours() / 3) * 3 - 1;
+    if(nextForecastHour.toString().padStart(2, '0') === '00' || nextForecastHour.toString().padStart(2, '0') === '01' || nextForecastHour.toString().padStart(2, '0') === '02') {
+      return '2300';
+    }
+    if(Math.floor(now.getHours())% 3 === 2 && now.getMinutes() >= 11) {
+      return Math.floor(now.getHours()).toString().padStart(2, '0') + '00';
+    }
+    console.log(nextForecastHour.toString().padStart(2, '0') + '10');
+    return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
+  }
+
+
+  let today = new Date();
+  let hours = today.getHours();
+
+  function getWeather(gridX, gridY) {
+    console.log("Fetching weather for coordinates:", gridX, gridY); // Debugging log
+    var forecastTime = getNextForecastTime(); // 다음 예보 시간 계산
+    var currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    console.log(forecastTime);
+    console.log(currentDate);
+    var xhr = new XMLHttpRequest();
+    var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+    var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
+    queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+    queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');
+    queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
+    queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent(currentDate);
+    queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent(forecastTime);
+
+
+    queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);
+    queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);
+    xhr.open('GET', url + queryParams);
+    xhr.onreadystatechange = function () {
+      if (this.readyState === 4 && this.status === 200) {
+        // 날씨 데이터 처리
+        displayWeatherData(this.responseXML);
+        // console.log(this.responseText);
+      }
+    };
+    xhr.send();
+  }
+
+  //12개씩
+
+  function displayWeatherData(xml) {
+    const items = xml.getElementsByTagName("item");
+    let weatherData = {};
+
+    // 데이터 구조화
+    for (let i = 0; i < items.length; i++) {
+      const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
+      const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
+      const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue;
+
+      if (!weatherData[time]) {
+        weatherData[time] = {};
+      }
+      weatherData[time][category] = value;
+    }
+
+    // 테이블 생성
+    let output = "<h3>Weather Forecast</h3>";
+    output += "<table class='table table-striped table-hover'><thead class='table-dark'><tr><th>Time</th><th>Temperature (°C)</th><th>Wind Speed (m/s)</th><th>Humidity (%)</th><th>Precipitation</th><th>Sky Condition</th><th>Weather Icon</th></tr></thead><tbody>";
+
+    for (const [time, data] of Object.entries(weatherData)) {
+      const weatherIcon = getWeatherIcon(parseInt(data['SKY']), parseInt(data['PTY']));
+      output += `<tr>
+                <td>${time}</td>
+                <td>${data['TMP'] || '--'}</td>
+                <td>${data['WSD'] || '--'}</td>
+                <td>${data['REH'] || '--'}</td>
+                <td>${data['PCP'] || '--'}</td>
+                <td>${data['SKY'] || '--'}</td>
+                <td>${weatherIcon || '--'}</td>
+              </tr>`;
+    }
+
+    output += "</tbody></table>";
+    document.getElementById("weather-data").innerHTML = output;
+  }
+
+
+  $(document).ready(function() {
+    setupAutocomplete('#city', 'city', 'cityResults');
+    setupAutocomplete('#district', 'district', 'districtResults');
+    setupAutocomplete('#subdistrict', 'subdistrict', 'subdistrictResults');
+
+    function setupAutocomplete(selector, type, resultListId) {
+      $(selector).on('input', function() {
+        var input = $(this).val();
+        if (input.length > 1) {
+          $.ajax({
+            url: '/searchAddress',
+            method: 'GET',
+            data: { type: type, searchTerm: input },
+            success: function(data) {
+              var autocompleteResults = $('#' + resultListId);
+              autocompleteResults.empty();
+              data.forEach(function(item) {
+                autocompleteResults.append($('<option>').val(item));
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var gridX = document.getElementById('gridX').value;
+    var gridY = document.getElementById('gridY').value;
+    if (gridX && gridY) {
+      getWeather(gridX, gridY);
+    }
+  });
+
+</script>
+
+<script>
+  function getWeatherIcon(sky, precipitation) {
+    const icons = {
+      clear: '☀️', // 맑음 아이콘
+      cloudy: '🌥', // 구름많음 아이콘
+      overcast: '☁️', // 흐림 아이콘
+      rain: '🌧', // 비 아이콘
+      sleet: '🌨', // 비/눈 아이콘
+      snow: '❄️', // 눈 아이콘
+      shower: '⛈' // 소나기 아이콘
+    };
+
+    // 하늘 상태를 기반으로 아이콘 설정
+    let icon = '';
+    switch(sky) {
+      case 1: // 맑음
+        icon = icons.clear;
+        break;
+      case 3: // 구름많음
+        icon = icons.cloudy;
+        break;
+      case 4: // 흐림
+        icon = icons.overcast;
+        break;
+      default:
+        icon = '';
+    }
+
+    // 강수 형태에 따라 아이콘을 추가
+    switch(precipitation) {
+      case 1: // 비
+        icon = icons.rain;
+        break;
+      case 2: // 비/눈
+        icon = icons.sleet;
+        break;
+      case 3: // 눈
+        icon = icons.snow;
+        break;
+      case 4: // 소나기
+        icon = icons.shower;
+        break;
+      default:
+    }
+
+    return icon;
+  }
+
+</script>
+
+<!--<script>-->
+<!--    function getNextForecastTime() {-->
+<!--        let now = new Date();-->
+<!--        let nextForecastHour = Math.ceil(now.getHours() / 3) * 3 + 2; // 2, 5, 8, 11, 14, 17, 20, 23 시에 맞추어 계산-->
+<!--        if (nextForecastHour >= 24) nextForecastHour -= 24; // 자정 넘어가는 시간 조정-->
+<!--        console.log(nextForecastHour.toString().padStart(2, '0') + '10');-->
+<!--        return nextForecastHour.toString().padStart(2, '0') + '10'; // 예: '0210', '0510'-->
+<!--    }-->
+
+<!--    function getWeather(gridX, gridY) {-->
+<!--        var forecastTime = getNextForecastTime(); // 다음 예보 시간 계산-->
+<!--        var currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');-->
+
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';-->
+<!--        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';        queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');-->
+<!--        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');-->
+<!--        queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');-->
+<!--        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent(currentDate);-->
+<!--        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent(forecastTime);-->
+<!--        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);-->
+<!--        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);-->
+
+
+<!--        xhr.open('GET', url + queryParams);-->
+<!--        xhr.onreadystatechange = function () {-->
+<!--            if (this.readyState === 4 && this.status === 200) {-->
+<!--                displayWeatherData(this.responseXML);-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send();-->
+<!--    }-->
+
+<!--    function displayWeatherData(xml) {-->
+<!--        const items = xml.getElementsByTagName("item");-->
+<!--        let weatherData = {};-->
+
+<!--        // 데이터 구조화-->
+<!--        for (let i = 0; i < items.length; i++) {-->
+<!--            const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;-->
+<!--            const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;-->
+<!--            const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue.slice(0, 2) + ':00'; // '0800' -> '08:00'-->
+
+<!--            if (!weatherData[time]) {-->
+<!--                weatherData[time] = {};-->
+<!--            }-->
+<!--            weatherData[time][category] = value;-->
+<!--        }-->
+
+<!--        // 테이블 생성-->
+<!--        let output = "<h3>Weather Forecast</h3>";-->
+<!--        output += "<table class='table table-striped table-hover'><thead class='table-dark'><tr><th>Time</th><th>Temperature (°C)</th><th>Wind Speed (m/s)</th><th>Humidity (%)</th><th>Precipitation (mm)</th><th>Sky Condition</th></tr></thead><tbody>";-->
+
+<!--        for (const [time, data] of Object.entries(weatherData)) {-->
+<!--            const skyCondition = getSkyCondition(data['SKY']);-->
+<!--            output += `<tr>-->
+<!--                <td>${time}</td>-->
+<!--                <td>${data['TMP'] || '&#45;&#45;'}</td>-->
+<!--                <td>${data['WSD'] || '&#45;&#45;'}</td>-->
+<!--                <td>${data['REH'] || '&#45;&#45;'}</td>-->
+<!--                <td>${data['PCP'] || '0.0'}</td>-->
+<!--                <td>${skyCondition || '&#45;&#45;'}</td>-->
+<!--              </tr>`;-->
+<!--        }-->
+
+<!--        output += "</tbody></table>";-->
+<!--        document.getElementById("weather-data").innerHTML = output;-->
+<!--    }-->
+
+<!--    function getSkyCondition(code) {-->
+<!--        const skyCodes = {-->
+<!--            '1': '맑음',-->
+<!--            '3': '구름많음',-->
+<!--            '4': '흐림'-->
+<!--        };-->
+<!--        return skyCodes[code] || code;-->
+<!--    }-->
+
+<!--    $(document).ready(function() {-->
+<!--        setupAutocomplete('#city', 'city', 'cityResults');-->
+<!--        setupAutocomplete('#district', 'district', 'districtResults');-->
+<!--        setupAutocomplete('#subdistrict', 'subdistrict', 'subdistrictResults');-->
+
+<!--        function setupAutocomplete(selector, type, resultListId) {-->
+<!--            $(selector).on('input', function() {-->
+<!--                var input = $(this).val();-->
+<!--                if (input.length > 1) {-->
+<!--                    $.ajax({-->
+<!--                        url: '/searchAddress',-->
+<!--                        method: 'GET',-->
+<!--                        data: { type: type, searchTerm: input },-->
+<!--                        success: function(data) {-->
+<!--                            var autocompleteResults = $('#' + resultListId);-->
+<!--                            autocompleteResults.empty();-->
+<!--                            data.forEach(function(item) {-->
+<!--                                autocompleteResults.append($('<option>').val(item));-->
+<!--                            });-->
+<!--                        }-->
+<!--                    });-->
+<!--                }-->
+<!--            });-->
+<!--        }-->
+<!--    });-->
+
+<!--    document.addEventListener("DOMContentLoaded", function() {-->
+<!--        setInterval(function() {-->
+<!--            var gridX = document.getElementById('gridX').value;-->
+<!--            var gridY = document.getElementById('gridY').value;-->
+<!--            if (gridX && gridY) {-->
+<!--                getWeather(gridX, gridY); // 주기적으로 날씨 데이터 호출-->
+<!--            }-->
+<!--            else{-->
+<!--                console.log("r겟웨더안댐")-->
+<!--            }-->
+<!--        }, 10800000); // 3시간마다 실행 (3시간 * 60분 * 60초 * 1000밀리초)-->
+<!--    });-->
+<!--</script>-->
+
+
+<!--<script>-->
+<!--    function submitCoordinates() {-->
+<!--        var city = document.getElementById('city').value;-->
+<!--        var district = document.getElementById('district').value;-->
+<!--        var subdistrict = document.getElementById('subdistrict').value;-->
+
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        xhr.open("POST", "/getCoordinates", true);-->
+<!--        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");-->
+<!--        xhr.onreadystatechange = function() {-->
+<!--            if (this.readyState === 4 && this.status === 200) {-->
+<!--                // 서버로부터 응답받은 JSON 데이터 파싱-->
+<!--                var response = JSON.parse(this.responseText);-->
+<!--                if(response.gridX && response.gridY) {-->
+<!--                    getWeather(response.gridX, response.gridY);-->
+<!--                }-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send("city=" + encodeURIComponent(city) + "&district=" + encodeURIComponent(district) + "&subdistrict=" + encodeURIComponent(subdistrict));-->
+<!--    }-->
+
+<!--    function getWeather(gridX, gridY) {-->
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';-->
+<!--        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + '실제서비스키';-->
+<!--        queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');-->
+<!--        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');-->
+<!--        queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');-->
+<!--        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent('20240407');-->
+<!--        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent('0500');-->
+<!--        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);-->
+<!--        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);-->
+<!--        xhr.open('GET', url + queryParams);-->
+<!--        xhr.onreadystatechange = function () {-->
+<!--            if (this.readyState === 4 && this.status === 200) {-->
+<!--                // 날씨 데이터 처리-->
+<!--                console.log(this.responseText);-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send();-->
+<!--    }-->
+
+<!--    document.getElementById("getCoordinatesForm").addEventListener("submit", function(event){-->
+<!--        event.preventDefault();-->
+<!--        submitCoordinates();-->
+<!--    });-->
+<!--</script>-->
+
+<!--<script>-->
+
+<!--    $(document).ready(function() {-->
+<!--        var mixedChartInstance = null;-->
+
+<!--        function getGenderAgeDistribution(gender) {-->
+<!--            return $.ajax({url: `/people/age-distribution?gender=${gender}`, type: 'GET'});-->
+<!--        }-->
+
+<!--        function updateCharts(gender) {-->
+<!--            const genderLabel = gender === 'Female' ? '여성' : '남성';-->
+<!--            // 여기서 $.when을 사용하여 두 Promise가 모두 완료될 때까지 기다립니다.-->
+<!--            $.when(-->
+<!--                $.ajax({url: '/age-distribution', type: 'GET'}),-->
+<!--                getGenderAgeDistribution(gender)-->
+<!--            ).done(function (ageDistributionResponse, genderAgeDistributionResponse) {-->
+<!--                // 여기서 ageDistributionResponse와 genderAgeDistributionResponse는-->
+<!--                // [data, textStatus, jqXHR] 형식의 배열입니다.-->
+<!--                initializeCharts(ageDistributionResponse[0], genderAgeDistributionResponse[0], genderLabel);-->
+<!--            }).fail(function (error) {-->
+<!--                console.log("Error loading data:", error);-->
+<!--            });-->
+<!--        }-->
+
+<!--        // 라디오 버튼 이벤트 핸들러-->
+<!--        $('#btnradio1').click(function () {-->
+<!--            updateCharts('Female');-->
+<!--        });-->
+
+<!--        $('#btnradio2').click(function () {-->
+<!--            updateCharts('Male');-->
+<!--        });-->
+
+<!--        // 초기 차트 로딩-->
+<!--        updateCharts('Female');-->
+
+<!--        function initializeCharts(ageDistribution, genderAgeDistribution, genderLabel) {-->
+<!--            const chartData = {-->
+<!--                labels: Object.keys(ageDistribution),-->
+<!--                datasets: [{-->
+<!--                    label: '연령대별 분포',-->
+<!--                    data: Object.values(ageDistribution),-->
+<!--                    backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                    borderColor: 'rgba(255, 206, 86, 1)',-->
+<!--                }, {-->
+<!--                    label: `성별 분포 (${genderLabel})`,-->
+<!--                    data: Object.values(genderAgeDistribution),-->
+<!--                    type: 'line',-->
+<!--                    borderColor: genderLabel === '여성' ? 'rgb(255, 99, 132)' : 'rgb(54, 162, 235)',-->
+<!--                    fill: false,-->
+<!--                }]-->
+<!--            };-->
+
+<!--            if (mixedChartInstance) {-->
+<!--                mixedChartInstance.data = chartData;-->
+<!--                mixedChartInstance.update();-->
+<!--            } else {-->
+<!--                const ctx = document.getElementById('mixedChart');-->
+<!--                mixedChartInstance = new Chart(ctx, {-->
+<!--                    type: 'bar',-->
+<!--                    data: chartData,-->
+<!--                    options: {-->
+<!--                        scales: {-->
+<!--                            y: {-->
+<!--                                beginAtZero: true,-->
+<!--                            }-->
+<!--                        }-->
+<!--                    }-->
+<!--                });-->
+<!--            }-->
+<!--        }-->
+
+<!--        initializeBarChart(); // 바 차트 초기화 호출 추가-->
+<!--        function initializeBarChart() {-->
+<!--            const barCtx = document.getElementById('barChart');-->
+<!--            $.ajax({-->
+<!--                url: '/age-distribution',-->
+<!--                method: 'GET',-->
+<!--                success: function (ageDistribution) {-->
+<!--                    // AJAX request for female age distribution-->
+<!--                    $.ajax({-->
+<!--                        url: '/people/age-distribution',-->
+<!--                        data: {gender: 'Female'},-->
+<!--                        method: 'GET',-->
+<!--                        success: function (femalesByAgeGroup) {-->
+<!--                            $.ajax({-->
+<!--                                url: '/people/age-distribution',-->
+<!--                                data: {gender: 'Male'},-->
+<!--                                method: 'GET',-->
+<!--                                success: function (malesByAgeGroup) {-->
+<!--                                    let barChart = new Chart(barCtx, {-->
+<!--                                        type: 'bar',-->
+<!--                                        data: {-->
+<!--                                            labels: Object.keys(ageDistribution),-->
+<!--                                            datasets: [{-->
+<!--                                                label: '연령대별 분포',-->
+<!--                                                data: Object.values(ageDistribution),-->
+<!--                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                                                borderColor: 'rgba(255, 206, 86, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (여성)',-->
+<!--                                                data: Object.values(femalesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',-->
+<!--                                                borderColor: 'rgba(255, 99, 132, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (남성)',-->
+<!--                                                data: Object.values(malesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',-->
+<!--                                                borderColor: 'rgba(54, 162, 235, 1)',-->
+<!--                                                borderWidth: 1-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                        options: {-->
+<!--                                            scales: {-->
+<!--                                                y: {-->
+<!--                                                    beginAtZero: true-->
+<!--                                                }-->
+<!--                                            }-->
+<!--                                        }-->
+<!--                                    });-->
+<!--                                }-->
+<!--                            });-->
+<!--                        }-->
+<!--                    });-->
+<!--                }-->
+<!--            });-->
+<!--        }-->
+<!--        initializeStackedBarChart(); // 스택형 바 차트 초기화 함수 호출-->
+<!--        function initializeStackedBarChart() {-->
+<!--            // AJAX 요청으로 전체 연령 분포 데이터 가져오기-->
+<!--            $.ajax({-->
+<!--                url: '/age-distribution',-->
+<!--                method: 'GET',-->
+<!--                success: function (ageDistribution) {-->
+<!--                    // AJAX 요청으로 여성의 연령별 분포 데이터 가져오기-->
+<!--                    $.ajax({-->
+<!--                        url: '/people/age-distribution',-->
+<!--                        data: {gender: 'Female'},-->
+<!--                        method: 'GET',-->
+<!--                        success: function (femalesByAgeGroup) {-->
+<!--                            // AJAX 요청으로 남성의 연령별 분포 데이터 가져오기-->
+<!--                            $.ajax({-->
+<!--                                url: '/people/age-distribution',-->
+<!--                                data: {gender: 'Male'},-->
+<!--                                method: 'GET',-->
+<!--                                success: function (malesByAgeGroup) {-->
+<!--                                    // 모든 데이터가 준비되면 차트 초기화-->
+<!--                                    const stackedCtx = document.getElementById('stackedBarChart');-->
+<!--                                    let stackedBarChart = new Chart(stackedCtx, {-->
+<!--                                        type: 'bar',-->
+<!--                                        data: {-->
+<!--                                            labels: Object.keys(ageDistribution),-->
+<!--                                            datasets: [{-->
+<!--                                                label: '연령대별 분포',-->
+<!--                                                data: Object.values(ageDistribution),-->
+<!--                                                backgroundColor: 'rgba(255, 206, 86, 0.2)',-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (여성)',-->
+<!--                                                data: Object.values(femalesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(255, 99, 132, 0.2)',-->
+<!--                                            }, {-->
+<!--                                                label: '성별 분포 (남성)',-->
+<!--                                                data: Object.values(malesByAgeGroup),-->
+<!--                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                        options: {-->
+<!--                                            scales: {-->
+<!--                                                x: {-->
+<!--                                                    stacked: true,-->
+<!--                                                },-->
+<!--                                                y: {-->
+<!--                                                    stacked: true,-->
+<!--                                                    beginAtZero: true,-->
+<!--                                                }-->
+<!--                                            }-->
+<!--                                        }-->
+<!--                                    });-->
+<!—                                }—>
+<!—                            });—>
+<!—                        }—>
+<!—                    });—>
+<!—                }—>
+<!—            });—>
+<!—        }})—>
+<!—</script>—>
+
+</body>
+</html>

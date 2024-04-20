@@ -13,13 +13,14 @@ public interface StepLocationRepository extends JpaRepository<Location, Long> {
     @Query("SELECT DISTINCT l.city FROM Location l")
     List<String> findDistinctStep1();
 
-    @Query("SELECT l.district FROM Location l WHERE l.city = :step1")
-    List<String> findStep2ByStep1(@Param("step1") String step1);
+    @Query("SELECT DISTINCT l.district FROM Location l WHERE l.city = :city")
+    List<String> findDistrictsByCity(@Param("city") String city);
 
-    @Query("SELECT l.subdistrict FROM Location l WHERE l.district = :step2")
-    List<String> findStep3ByStep2(@Param("step2") String step2);
+    // city와 district에 따른 subdistrict 목록을 가져오는 쿼리
+    @Query("SELECT DISTINCT l.subdistrict FROM Location l WHERE l.city = :city AND l.district = :district")
+    List<String> findSubdistrictsByCityAndDistrict(@Param("city") String city, @Param("district") String district);
 
     @Query("SELECT l FROM Location l WHERE l.city = :city AND l.district = :district AND l.subdistrict = :subdistrict")
-    Optional<Location> findCoordinatesByLocation(@Param("city") String city, @Param("district") String district, @Param("subdistrict") String subdistrict);
+    Optional<Location> findByCityDistrictSubdistrict(@Param("city") String city, @Param("district") String district, @Param("subdistrict") String subdistrict);
 
 }

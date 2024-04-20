@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class StepLocationController {
@@ -25,21 +27,31 @@ public class StepLocationController {
         return ResponseEntity.ok(city);
     }
 
-    @GetMapping("/api/step2/{step1}")
-    public ResponseEntity<List<String>> getStep2(@PathVariable String step1) {
-        List<String> district = locationService.getStep2ForStep1(step1);
-        return ResponseEntity.ok(district);
+    @GetMapping("/api/districts/{city}")
+    public ResponseEntity<List<String>> getDistrictsByCity(@PathVariable String city) {
+        List<String> districts = locationService.getDistrictsByCity(city);
+        return districts != null && !districts.isEmpty() ? ResponseEntity.ok(districts) : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/api/step3/{step2}")
-    public ResponseEntity<List<String>> getStep3(@PathVariable String step2) {
-        List<String> subdistrict = locationService.getStep3ForStep2(step2);
-        return ResponseEntity.ok(subdistrict);
+    // city와 district에 따른 subdistrict 목록을 반환하는 엔드포인트
+    @GetMapping("/api/subdistricts/{city}/{district}")
+    public ResponseEntity<List<String>> getSubdistrictsByCityAndDistrict(@PathVariable String city, @PathVariable String district) {
+        List<String> subdistricts = locationService.getSubdistrictsByCityAndDistrict(city, district);
+        return subdistricts != null && !subdistricts.isEmpty() ? ResponseEntity.ok(subdistricts) : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/coordinates")
-    public ResponseEntity<Location> getCoordinates(@RequestParam String city, @RequestParam String district, @RequestParam String subdistrict) {
-        Location location = locationService.getCoordinates(city, district, subdistrict);
-        return location != null ? ResponseEntity.ok(location) : ResponseEntity.notFound().build();
+    @GetMapping("/api/coordinates")
+    public ResponseEntity<?> getCoordinates(@RequestParam String city, @RequestParam String district, @RequestParam String subdistrict) {
+        Location location = locationService.getLocationCoordinates(city, district, subdistrict);
+        if (location != null) {
+            // 좌표 객체를 만들어 반환합니다.
+            Map<String, String> coordinates = new HashMap<>();
+            coordinates.put("X", location.getX());
+            coordinates.put("Y", location.getY());
+            return ResponseEntity.ok(coordinates);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
+
 }
