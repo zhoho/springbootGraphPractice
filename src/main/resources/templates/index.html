@@ -10,26 +10,51 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
     <link th:href="@{/css/style.css}" rel="stylesheet" />
     <script th:src="@{/js/getweather.js}"></script>
+    <style>
+        .step-container {
+            margin-bottom: 15px;
+        }
+
+        /* 부트스트랩 그리드 시스템을 활용합니다. */
+        .row {
+            margin: 0 -15px; /* 부트스트랩 row의 음수 마진을 재조정합니다. */
+        }
+
+        .row > [class*='col-'] {
+            padding: 0 15px; /* 컬럼 패딩을 재조정합니다. */
+        }
+
+        /* 버튼의 기본 스타일을 조정합니다. */
+        .button {
+            width: 100%;
+            margin-bottom: 30px; /* 버튼 사이의 수직 간격 */
+            padding: 20px; /* 버튼 안쪽 여백 */
+        }
+
+    </style>
 </head>
 
 <body>
 
+<div class="container">
 <!-- 단계별 리스트 컨테이너, 초기에는 step1만 표시 -->
-<div id="step1-container" class="step-container">
-    <ul id="step1-list" class="list-inline">
-    </ul>
-</div>
+    <div id="step1-container" class="step-container">
+        <div id="step1-list" class="row"> <!-- 변경된 부분: ul이 아닌 div로 수정 -->
+        </div>
+    </div>
 
-<div id="step2-container" class="step-container" style="display:none;">
-    <button onclick="goBackToStep1()"><</button>
-    <ul id="step2-list" class="list-inline">
-    </ul>
-</div>
+    <div id="step2-container" class="step-container" style="display:none;">
+        <button onclick="goBackToStep1()" class="btn btn-secondary mb-3">&lt;</button>
+        <div id="step2-list" class="row">
+        </div>
+    </div>
 
-<div id="step3-container" class="step-container" style="display:none;">
-    <button onclick="goBackToStep2()"><</button>
-    <ul id="step3-list" class="list-inline">
-    </ul>
+    <div id="step3-container" class="step-container" style="display:none;">
+        <button onclick="goBackToStep2()" class="btn btn-secondary mb-3">&lt;</button>
+        <div id="step3-list" class="row">
+        </div>
+    </div>
+
 </div>
 
 <p id="coordinates-display"></p>
@@ -59,33 +84,36 @@ function fetchCities() {
             const step1List = document.getElementById('step1-list');
             step1List.innerHTML = ''; // 기존 목록을 지웁니다.
             citiesData.forEach((city) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-inline-item';
+                const colDiv = document.createElement('div');
+                // 부트스트랩에서 3열로 정렬하기 위해 col-lg-4를 사용합니다.
+                colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch';
                 const button = document.createElement('button');
                 button.textContent = city;
+                button.className = 'btn btn-primary button my-2'; // 부트스트랩 버튼 클래스 사용
                 button.onclick = function() { onStep1Clicked(city); };
-                listItem.appendChild(button);
-                step1List.appendChild(listItem);
+                colDiv.appendChild(button);
+                step1List.appendChild(colDiv);
             });
         })
         .catch(error => console.error('Error fetching cities:', error));
 }
+
 
 function onStep1Clicked(cityValue) {
     fetch(`/api/districts/${encodeURIComponent(cityValue)}`)
         .then(response => response.json())
         .then(districtsData => {
             const step2List = document.getElementById('step2-list');
-            step2List.innerHTML = '';
+            step2List.innerHTML = ''; // 기존 목록을 지웁니다.
             districtsData.forEach((district) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-inline-item';
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
                 const button = document.createElement('button');
                 button.textContent = district;
-                // Step2의 버튼에 대한 클릭 이벤트로 onStep2Clicked 함수에 cityValue도 함께 전달합니다.
+                button.className = 'btn btn-primary button'; // 부트스트랩 버튼 클래스 사용
                 button.onclick = function() { onStep2Clicked(cityValue, district); };
-                listItem.appendChild(button);
-                step2List.appendChild(listItem);
+                colDiv.appendChild(button);
+                step2List.appendChild(colDiv);
             });
             document.getElementById('step2-container').style.display = 'block';
             document.getElementById('step1-container').style.display = 'none';
@@ -93,28 +121,29 @@ function onStep1Clicked(cityValue) {
         .catch(error => console.error('Error fetching districts:', error));
 }
 
+
 function onStep2Clicked(cityValue, districtValue) {
     fetch(`/api/subdistricts/${encodeURIComponent(cityValue)}/${encodeURIComponent(districtValue)}`)
         .then(response => response.json())
         .then(subdistrictsData => {
-            const step3Container = document.getElementById('step3-container');
             const step3List = document.getElementById('step3-list');
-            step3List.innerHTML = '';
+            step3List.innerHTML = ''; // 기존 목록을 지웁니다.
             subdistrictsData.forEach((subdistrict) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-inline-item';
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
                 const button = document.createElement('button');
                 button.textContent = subdistrict;
-                // 여기에서 cityValue, districtValue, subdistrict을 onStep3Clicked로 전달합니다.
+                button.className = 'btn btn-primary button'; // 부트스트랩 버튼 클래스 사용
                 button.onclick = function() { onStep3Clicked(cityValue, districtValue, subdistrict); };
-                listItem.appendChild(button);
-                step3List.appendChild(listItem);
+                colDiv.appendChild(button);
+                step3List.appendChild(colDiv);
             });
-            step3Container.style.display = 'block'; // step3 컨테이너를 보여줍니다.
+            document.getElementById('step3-container').style.display = 'block'; // step3 컨테이너를 보여줍니다.
             document.getElementById('step2-container').style.display = 'none'; // step2 컨테이너를 숨깁니다.
         })
         .catch(error => console.error('Error fetching subdistricts:', error));
 }
+
 
     function onStep3Clicked(city, district, subdistrict) {
         fetch(`/api/coordinates?city=${encodeURIComponent(city)}&district=${encodeURIComponent(district)}&subdistrict=${encodeURIComponent(subdistrict)}`)
