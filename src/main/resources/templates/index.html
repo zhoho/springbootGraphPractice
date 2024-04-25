@@ -11,25 +11,40 @@
     <link th:href="@{/css/style.css}" rel="stylesheet" />
     <script th:src="@{/js/getweather.js}"></script>
     <style>
-        .step-container {
-            margin-bottom: 15px;
-        }
-
-        /* 부트스트랩 그리드 시스템을 활용합니다. */
-        .row {
-            margin: 0 -15px; /* 부트스트랩 row의 음수 마진을 재조정합니다. */
-        }
-
-        .row > [class*='col-'] {
-            padding: 0 15px; /* 컬럼 패딩을 재조정합니다. */
-        }
-
-        /* 버튼의 기본 스타일을 조정합니다. */
         .button {
-            width: 100%;
-            margin-bottom: 30px; /* 버튼 사이의 수직 간격 */
-            padding: 20px; /* 버튼 안쪽 여백 */
+            width: 100%; /* 버튼의 너비를 컨테이너에 맞춥니다. */
+            margin-bottom: 10px !important; /* 버튼 사이의 수직 간격을 줄입니다. */
+            padding: 20px 10px !important;
         }
+
+        /* 사용자 지정 버튼 색상 */
+        .btn-custom {
+            background-color: #F7F8E0;
+            border-color: #F7F8E0;
+        }
+
+        .btn-custom:hover {
+            background-color: #F2F5A9;
+        }
+
+
+        /* 각 row에 대한 간격을 조정합니다. */
+        .row {
+            margin-right: -15px; /* 부트스트랩 row의 음수 마진을 재조정합니다. */
+            margin-left: -15px; /* 부트스트랩 row의 음수 마진을 재조정합니다. */
+        }
+
+        /* 각 컬럼의 패딩을 조정하여 간격을 동일하게 만듭니다. */
+        .row, .row > [class*='col-'] {
+            padding-right: 5px; /* 컬럼 오른쪽 패딩을 줄입니다. */
+            padding-left: 5px; /* 컬럼 왼쪽 패딩을 줄입니다. */
+        }
+
+        /* 부트스트랩 그리드 간격을 조정할 수 있는 클래스 추가 */
+        .gap {
+            gap: 15px; /* grid-gap 속성으로 열 사이의 간격을 조정합니다. */
+        }
+
 
     </style>
 </head>
@@ -89,7 +104,7 @@ function fetchCities() {
                 colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch';
                 const button = document.createElement('button');
                 button.textContent = city;
-                button.className = 'btn btn-primary button my-2'; // 부트스트랩 버튼 클래스 사용
+                button.className = 'btn btn-custom button my-2 button my-2'; // 부트스트랩 버튼 클래스 사용
                 button.onclick = function() { onStep1Clicked(city); };
                 colDiv.appendChild(button);
                 step1List.appendChild(colDiv);
@@ -106,21 +121,22 @@ function onStep1Clicked(cityValue) {
             const step2List = document.getElementById('step2-list');
             step2List.innerHTML = ''; // 기존 목록을 지웁니다.
             districtsData.forEach((district) => {
-                const colDiv = document.createElement('div');
-                colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
-                const button = document.createElement('button');
-                button.textContent = district;
-                button.className = 'btn btn-primary button'; // 부트스트랩 버튼 클래스 사용
-                button.onclick = function() { onStep2Clicked(cityValue, district); };
-                colDiv.appendChild(button);
-                step2List.appendChild(colDiv);
+                if (district.trim() !== '') { // 값이 있는 경우에만 버튼 생성
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
+                    const button = document.createElement('button');
+                    button.textContent = district;
+                    button.className = 'btn btn-custom button my-2 button my-2'; // 부트스트랩 버튼 클래스 사용
+                    button.onclick = function() { onStep2Clicked(cityValue, district); };
+                    colDiv.appendChild(button);
+                    step2List.appendChild(colDiv);
+                }
             });
             document.getElementById('step2-container').style.display = 'block';
             document.getElementById('step1-container').style.display = 'none';
         })
         .catch(error => console.error('Error fetching districts:', error));
 }
-
 
 function onStep2Clicked(cityValue, districtValue) {
     fetch(`/api/subdistricts/${encodeURIComponent(cityValue)}/${encodeURIComponent(districtValue)}`)
@@ -129,14 +145,16 @@ function onStep2Clicked(cityValue, districtValue) {
             const step3List = document.getElementById('step3-list');
             step3List.innerHTML = ''; // 기존 목록을 지웁니다.
             subdistrictsData.forEach((subdistrict) => {
-                const colDiv = document.createElement('div');
-                colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
-                const button = document.createElement('button');
-                button.textContent = subdistrict;
-                button.className = 'btn btn-primary button'; // 부트스트랩 버튼 클래스 사용
-                button.onclick = function() { onStep3Clicked(cityValue, districtValue, subdistrict); };
-                colDiv.appendChild(button);
-                step3List.appendChild(colDiv);
+                if (subdistrict.trim() !== '') { // 값이 있는 경우에만 버튼 생성
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col-lg-4 d-flex justify-content-center align-items-stretch mb-3';
+                    const button = document.createElement('button');
+                    button.textContent = subdistrict;
+                    button.className = 'btn btn-custom button my-2 button my-2'; // 부트스트랩 버튼 클래스 사용
+                    button.onclick = function() { onStep3Clicked(cityValue, districtValue, subdistrict); };
+                    colDiv.appendChild(button);
+                    step3List.appendChild(colDiv);
+                }
             });
             document.getElementById('step3-container').style.display = 'block'; // step3 컨테이너를 보여줍니다.
             document.getElementById('step2-container').style.display = 'none'; // step2 컨테이너를 숨깁니다.
