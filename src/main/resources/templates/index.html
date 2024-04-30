@@ -171,15 +171,20 @@ function onStep3Clicked(city, district, subdistrict) {
         .then(location => {
             if(location) {
                 console.log('Coordinates:', location);
-                // 좌표 정보를 DOM에 표시하거나 다른 처리를 할 수 있습니다.
-                // 예를 들어, 아래 코드를 사용하여 HTML 요소에 좌표를 표시할 수 있습니다.
                 document.getElementById('coordinates-display').textContent = `X: ${location.X}, Y: ${location.Y}`;
                 getWeather(location.X, location.Y);
+                hideLocationSelection();
             } else {
                 console.error('Location not found');
             }
         })
         .catch(error => console.error('Error:', error));
+}
+
+function hideLocationSelection() {
+    document.getElementById('step1-container').style.display = 'none';
+    document.getElementById('step2-container').style.display = 'none';
+    document.getElementById('step3-container').style.display = 'none';
 }
 </script>
 
