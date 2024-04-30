@@ -44,6 +44,18 @@
         .gap {
             gap: 15px; /* grid-gap 속성으로 열 사이의 간격을 조정합니다. */
         }
+        .weather-card {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f7f9fc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .weather-icon {
+            font-size: 48px;
+        }
 
 
     </style>
@@ -72,7 +84,12 @@
 
 </div>
 
-<div id="weather-data"></div>
+<div class="weather-card" id="weather-data">
+    <h2 id="current-time">--:--</h2>
+<!--    <p id="current-time">Time: &#45;&#45;:&#45;&#45;</p>-->
+    <h1 id="temperature">--°C</h1>
+    <span id="weather-icon" class="weather-icon">☀️</span>
+</div>
 
 <p id="coordinates-display"></p>
 
@@ -164,57 +181,139 @@ function onStep2Clicked(cityValue, districtValue) {
         .catch(error => console.error('Error fetching subdistricts:', error));
 }
 
+
 function onStep3Clicked(city, district, subdistrict) {
     fetch(`/api/coordinates?city=${encodeURIComponent(city)}&district=${encodeURIComponent(district)}&subdistrict=${encodeURIComponent(subdistrict)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch coordinates');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(location => {
-            if (location && location.X && location.Y) {
+            if(location) {
                 console.log('Coordinates:', location);
-                // 서버의 날씨 정보 페이지로 리디렉션
-                window.location.href = `/weather?gridX=${encodeURIComponent(location.X)}&gridY=${encodeURIComponent(location.Y)}`;
+                // document.getElementById('coordinates-display').textContent = `X: ${location.X}, Y: ${location.Y}`;
+                getWeather(location.X, location.Y);
+                hideLocationSelection();
             } else {
-                throw new Error('Location not found');
+                console.error('Location not found');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error retrieving location data: ' + error.message);
-        });
+        .catch(error => console.error('Error:', error));
+}
+
+function hideLocationSelection() {
+    document.getElementById('step1-container').style.display = 'none';
+    document.getElementById('step2-container').style.display = 'none';
+    document.getElementById('step3-container').style.display = 'none';
 }
 </script>
 
 <script>
-    $(document).ready(function() {
-        setupAutocomplete('#city', 'city', 'cityResults');
-        setupAutocomplete('#district', 'district', 'districtResults');
-        setupAutocomplete('#subdistrict', 'subdistrict', 'subdistrictResults');
-
-        function setupAutocomplete(selector, type, resultListId) {
-            $(selector).on('input', function() {
-                var input = $(this).val();
-                if (input.length > 1) {
-                    $.ajax({
-                        url: '/searchAddress',
-                        method: 'GET',
-                        data: { type: type, searchTerm: input },
-                        success: function(data) {
-                            var autocompleteResults = $('#' + resultListId);
-                            autocompleteResults.empty();
-                            data.forEach(function(item) {
-                                autocompleteResults.append($('<option>').val(item));
-                            });
-                        }
-                    });
-                }
-            });
+    function getNextForecastTime() {
+        let now = new Date();
+        let nextForecastHour = Math.floor(now.getHours() / 3) * 3 - 1;
+        if(nextForecastHour.toString().padStart(2, '0') === '00' || nextForecastHour.toString().padStart(2, '0') === '01' || nextForecastHour.toString().padStart(2, '0') === '02') {
+            return '2300';
         }
+        if(Math.floor(now.getHours())% 3 === 2 && now.getMinutes() >= 11) {
+            return Math.floor(now.getHours()).toString().padStart(2, '0') + '00';
+        }
+        console.log(nextForecastHour.toString().padStart(2, '0') + '10');
+        return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
+    }
+
+    function getWeather(gridX, gridY) {
+        console.log("Fetching weather for coordinates:", gridX, gridY); // Debugging log
+        var forecastTime = getNextForecastTime(); // 다음 예보 시간 계산
+        var currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        console.log(forecastTime);
+        console.log(currentDate);
+        var xhr = new XMLHttpRequest();
+        var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+        var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
+        queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('37'); //12개씩 적용 12*4 = 48
+        queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
+        queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent(currentDate);
+        queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent(forecastTime);
+
+
+        queryParams += '&' + encodeURIComponent('nx') + '=' + encodeURIComponent(gridX);
+        queryParams += '&' + encodeURIComponent('ny') + '=' + encodeURIComponent(gridY);
+        xhr.open('GET', url + queryParams);
+        xhr.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200) {
+                // 날씨 데이터 처리
+                displayWeatherData(this.responseXML);
+                // console.log(this.responseText);
+                document.getElementById('weather-data').style.display = 'block';
+            }
+        };
+        xhr.send();
+    }
+
+    function calculateCurrentTime() {
+        let now = new Date();
+        let currentTime = Math.floor(now.getHours()) * 100 - getNextForecastTime() - 100;
+        return currentTime / 100;
+    }
+    function displayWeatherData(xml) {
+        const items = xml.getElementsByTagName("item");
+        let weatherData = {};
+
+        updateCurrentTime(); // 현재 시간 업데이트를 처음에 한 번 호출
+        setInterval(updateCurrentTime, 60000); // 1분마다 시간 업데이트
+
+        for (let i = 0; i < items.length; i++) {
+            const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue;
+            if (time.slice(0, 2) === new Date().getHours().toString().padStart(2, '0')) {
+                const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
+                const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
+                weatherData[category] = value;
+            }
+        }
+
+        document.getElementById('temperature').textContent = `${weatherData['TMP'] || '--'}°C`;
+        document.getElementById('weather-icon').textContent = getWeatherIcon(parseInt(weatherData['SKY']), parseInt(weatherData['PTY']));
+    }
+
+    function updateCurrentTime() {
+        let now = new Date();
+        let day = now.getDate().toString().padStart(2, '0');
+        let month = (now.getMonth() + 1).toString().padStart(2, '0');
+        let weekday = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+        let hours = now.getHours();
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let seconds = now.getSeconds().toString().padStart(2, '0'); // 초도 추가하여 더 정확한 시간 표시
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 시간이 0이면 12로 변환
+        let currentTime = `${month}.${day}(${weekday}) ${hours}:${minutes}`;
+
+        document.getElementById('current-time').textContent = currentTime;
+        requestAnimationFrame(updateCurrentTime); // 다음 프레임에 이 함수를 다시 호출
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        requestAnimationFrame(updateCurrentTime); // 페이지 로드 후 처음으로 함수 호출
     });
 
+
+    function getWeatherIcon(sky, pty) {
+        if (pty > 0) {
+            switch (pty) {
+                case 1: return '🌧'; // 비
+                case 2: return '🌨'; // 비/눈
+                case 3: return '❄️'; // 눈
+            }
+        } else {
+            switch (sky) {
+                case 1: return '☀️'; // 맑음
+                case 3: return '🌥'; // 구름 많음
+                case 4: return '☁️'; // 흐림
+            }
+        }
+    }
+
+
 </script>
+
 </body>
 </html>
