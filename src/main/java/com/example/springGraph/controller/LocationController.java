@@ -1,7 +1,9 @@
 package com.example.springGraph.controller;
 
 import com.example.springGraph.entity.Location;
+import com.example.springGraph.entity.Weather;
 import com.example.springGraph.service.LocationService;
+import com.example.springGraph.service.WeatherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -60,5 +62,4 @@ public class LocationController {
                 return new ArrayList<>();
         }
     }
-
 }

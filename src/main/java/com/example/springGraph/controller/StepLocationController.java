@@ -1,11 +1,13 @@
 package com.example.springGraph.controller;
 
 import com.example.springGraph.entity.Location;
+import com.example.springGraph.entity.Weather;
 import com.example.springGraph.repository.StepLocationRepository;
 import com.example.springGraph.service.LocationService;
 import com.example.springGraph.service.StepLocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,5 +55,4 @@ public class StepLocationController {
             return ResponseEntity.notFound().build();
         }
     }
-
 }
