@@ -21,4 +21,9 @@ public class WeatherController {
         model.addAttribute("weather", weather);
         return "weatherPage";  // Thymeleaf 템플릿 이름
     }
+
+    @GetMapping("/api/weather/latest")
+    public Weather getLatestWeather() {
+        return weatherService.getLatestWeather();
+    }
 }
