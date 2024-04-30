@@ -44,6 +44,18 @@
         .gap {
             gap: 15px; /* grid-gap 속성으로 열 사이의 간격을 조정합니다. */
         }
+        .weather-card {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f7f9fc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .weather-icon {
+            font-size: 48px;
+        }
 
 
     </style>
@@ -72,7 +84,12 @@
 
 </div>
 
-<div id="weather-data"></div>
+<div class="weather-card" id="weather-data">
+    <h2 id="current-time">--:--</h2>
+<!--    <p id="current-time">Time: &#45;&#45;:&#45;&#45;</p>-->
+    <h1 id="temperature">--°C</h1>
+    <span id="weather-icon" class="weather-icon">☀️</span>
+</div>
 
 <p id="coordinates-display"></p>
 
@@ -171,7 +188,7 @@ function onStep3Clicked(city, district, subdistrict) {
         .then(location => {
             if(location) {
                 console.log('Coordinates:', location);
-                document.getElementById('coordinates-display').textContent = `X: ${location.X}, Y: ${location.Y}`;
+                // document.getElementById('coordinates-display').textContent = `X: ${location.X}, Y: ${location.Y}`;
                 getWeather(location.X, location.Y);
                 hideLocationSelection();
             } else {
@@ -226,6 +243,7 @@ function hideLocationSelection() {
                 // 날씨 데이터 처리
                 displayWeatherData(this.responseXML);
                 // console.log(this.responseText);
+                document.getElementById('weather-data').style.display = 'block';
             }
         };
         xhr.send();
@@ -239,126 +257,61 @@ function hideLocationSelection() {
     function displayWeatherData(xml) {
         const items = xml.getElementsByTagName("item");
         let weatherData = {};
-        let startPoint = calculateCurrentTime();
-        console.log(startPoint * 12);
-        // 데이터 구조화
-        console.log("아이템 length : " + items.length);
-        for (let i = startPoint * 12; i < (items.length /3 - 1) * (startPoint + 1); i++) {
-            const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
-            const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
+
+        updateCurrentTime(); // 현재 시간 업데이트를 처음에 한 번 호출
+        setInterval(updateCurrentTime, 60000); // 1분마다 시간 업데이트
+
+        for (let i = 0; i < items.length; i++) {
             const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue;
-
-            if (!weatherData[time]) {
-                weatherData[time] = {};
+            if (time.slice(0, 2) === new Date().getHours().toString().padStart(2, '0')) {
+                const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
+                const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
+                weatherData[category] = value;
             }
-            weatherData[time][category] = value;
         }
 
-        // 테이블 생성
-        let output = "<h3>Weather Forecast</h3>";
-        output += "<table class='table table-striped table-hover'><thead class='table-dark'><tr><th>Time</th><th>Temperature (°C)</th><th>Wind Speed (m/s)</th><th>Humidity (%)</th><th>Precipitation</th><th>Sky Condition</th><th>Weather Icon</th></tr></thead><tbody>";
-
-        for (const [time, data] of Object.entries(weatherData)) {
-            const weatherIcon = getWeatherIcon(parseInt(data['SKY']), parseInt(data['PTY']));
-            output += `<tr>
-                <td>${time}</td>
-                <td>${data['TMP'] || '—'}</td>
-                <td>${data['WSD'] || '—'}</td>
-                <td>${data['REH'] || '—'}</td>
-                <td>${data['PCP'] || '—'}</td>
-                <td>${data['SKY'] || '—'}</td>
-                <td>${weatherIcon || '—'}</td>
-              </tr>`;
-        }
-
-        output += "</tbody></table>";
-        document.getElementById("weather-data").innerHTML = output;
+        document.getElementById('temperature').textContent = `${weatherData['TMP'] || '--'}°C`;
+        document.getElementById('weather-icon').textContent = getWeatherIcon(parseInt(weatherData['SKY']), parseInt(weatherData['PTY']));
     }
 
+    function updateCurrentTime() {
+        let now = new Date();
+        let day = now.getDate().toString().padStart(2, '0');
+        let month = (now.getMonth() + 1).toString().padStart(2, '0');
+        let weekday = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+        let hours = now.getHours();
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let seconds = now.getSeconds().toString().padStart(2, '0'); // 초도 추가하여 더 정확한 시간 표시
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 시간이 0이면 12로 변환
+        let currentTime = `${month}.${day}(${weekday}) ${hours}:${minutes}`;
 
-    $(document).ready(function() {
-        setupAutocomplete('#city', 'city', 'cityResults');
-        setupAutocomplete('#district', 'district', 'districtResults');
-        setupAutocomplete('#subdistrict', 'subdistrict', 'subdistrictResults');
-
-        function setupAutocomplete(selector, type, resultListId) {
-            $(selector).on('input', function() {
-                var input = $(this).val();
-                if (input.length > 1) {
-                    $.ajax({
-                        url: '/searchAddress',
-                        method: 'GET',
-                        data: { type: type, searchTerm: input },
-                        success: function(data) {
-                            var autocompleteResults = $('#' + resultListId);
-                            autocompleteResults.empty();
-                            data.forEach(function(item) {
-                                autocompleteResults.append($('<option>').val(item));
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        var gridX = document.getElementById('gridX').value;
-        var gridY = document.getElementById('gridY').value;
-        if (gridX && gridY) {
-            getWeather(gridX, gridY);
-        }
-    });
-
-</script>
-
-<script>
-    function getWeatherIcon(sky, precipitation) {
-        const icons = {
-            clear: '☀️', // 맑음 아이콘
-            cloudy: '🌥', // 구름많음 아이콘
-            overcast: '☁️', // 흐림 아이콘
-            rain: '🌧', // 비 아이콘
-            sleet: '🌨', // 비/눈 아이콘
-            snow: '❄️', // 눈 아이콘
-            shower: '⛈' // 소나기 아이콘
-        };
-
-        // 하늘 상태를 기반으로 아이콘 설정
-        let icon = '';
-        switch(sky) {
-            case 1: // 맑음
-                icon = icons.clear;
-                break;
-            case 3: // 구름많음
-                icon = icons.cloudy;
-                break;
-            case 4: // 흐림
-                icon = icons.overcast;
-                break;
-            default:
-                icon = '';
-        }
-
-        // 강수 형태에 따라 아이콘을 추가
-        switch(precipitation) {
-            case 1: // 비
-                icon = icons.rain;
-                break;
-            case 2: // 비/눈
-                icon = icons.sleet;
-                break;
-            case 3: // 눈
-                icon = icons.snow;
-                break;
-            case 4: // 소나기
-                icon = icons.shower;
-                break;
-            default:
-        }
-
-        return icon;
+        document.getElementById('current-time').textContent = currentTime;
+        requestAnimationFrame(updateCurrentTime); // 다음 프레임에 이 함수를 다시 호출
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        requestAnimationFrame(updateCurrentTime); // 페이지 로드 후 처음으로 함수 호출
+    });
+
+
+    function getWeatherIcon(sky, pty) {
+        if (pty > 0) {
+            switch (pty) {
+                case 1: return '🌧'; // 비
+                case 2: return '🌨'; // 비/눈
+                case 3: return '❄️'; // 눈
+            }
+        } else {
+            switch (sky) {
+                case 1: return '☀️'; // 맑음
+                case 3: return '🌥'; // 구름 많음
+                case 4: return '☁️'; // 흐림
+            }
+        }
+    }
+
 
 </script>
 
