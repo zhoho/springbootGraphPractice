@@ -197,9 +197,6 @@ function onStep3Clicked(city, district, subdistrict) {
         return nextForecastHour.toString().padStart(2, '0') + '00'; // 예: '0210', '0510'
     }
 
-
-    let today = new Date();
-
     function getWeather(gridX, gridY) {
         console.log("Fetching weather for coordinates:", gridX, gridY); // Debugging log
         var forecastTime = getNextForecastTime(); // 다음 예보 시간 계산
@@ -210,7 +207,7 @@ function onStep3Clicked(city, district, subdistrict) {
         var url = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
         var queryParams = '?' + encodeURIComponent('serviceKey') + '=' + 'hogAXADhx1TwUFYu9kBfwwvsv5m%2FwsLzvQT2tBT0BFSH3eLnXp88Dx%2FR6x2GCPtWKfaUQEPix2VcWYEp0Hz5Tw%3D%3D';
         queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
-        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('50');
+        queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('37'); //12개씩 적용 12*4 = 48
         queryParams += '&' + encodeURIComponent('dataType') + '=' + encodeURIComponent('XML');
         queryParams += '&' + encodeURIComponent('base_date') + '=' + encodeURIComponent(currentDate);
         queryParams += '&' + encodeURIComponent('base_time') + '=' + encodeURIComponent(forecastTime);
@@ -228,12 +225,20 @@ function onStep3Clicked(city, district, subdistrict) {
         };
         xhr.send();
     }
+
+    function calculateCurrentTime() {
+        let now = new Date();
+        let currentTime = Math.floor(now.getHours()) * 100 - getNextForecastTime() - 100;
+        return currentTime / 100;
+    }
     function displayWeatherData(xml) {
         const items = xml.getElementsByTagName("item");
         let weatherData = {};
-
+        let startPoint = calculateCurrentTime();
+        console.log(startPoint * 12);
         // 데이터 구조화
-        for (let i = 0; i < items.length; i++) {
+        console.log("아이템 length : " + items.length);
+        for (let i = startPoint * 12; i < (items.length /3 - 1) * (startPoint + 1); i++) {
             const category = items[i].getElementsByTagName("category")[0].childNodes[0].nodeValue;
             const value = items[i].getElementsByTagName("fcstValue")[0].childNodes[0].nodeValue;
             const time = items[i].getElementsByTagName("fcstTime")[0].childNodes[0].nodeValue;
